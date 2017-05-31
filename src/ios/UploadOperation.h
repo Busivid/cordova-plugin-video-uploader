@@ -8,6 +8,7 @@
 @property (nonatomic, copy) NSString* fileKey;
 @property (nonatomic, copy) NSString* fileName;
 @property (nonatomic, strong) NSDictionary* headers;
+@property (nonatomic, strong) NSDictionary* params;
 @property (nonatomic, copy) NSString* mimeType;
 @property (nonatomic, copy) NSNumber* timeout;
 @property (nonatomic, copy) NSString* filePath;

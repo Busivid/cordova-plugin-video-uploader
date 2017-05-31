@@ -163,8 +163,8 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
     NSMutableData* postBodyBeforeFile = [NSMutableData data];
     
     // Cory: Not 100% sure if headers is correct for this?
-    for (NSString* key in parameters.headers) {
-        id val = [parameters.headers objectForKey:key];
+    for (NSString* key in parameters.params) {
+        id val = [parameters.params objectForKey:key];
         if (!val || (val == [NSNull null]) || [key isEqualToString:kOptionsKeyCookie]) {
             continue;
         }
