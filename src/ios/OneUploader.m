@@ -66,12 +66,14 @@
             NSString *callbackUrl = file[@"callbackUrl"];
             NSString *fileName = file[@"fileName"];
             NSString *uploadUrl = file[@"uploadUrl"];
+            NSDictionary *params = file[@"params"];
 
             UploadParameters *uploadParams = [[UploadParameters alloc] init];
             uploadParams.callbackUrl = callbackUrl;
             uploadParams.chunkMode = true;
             uploadParams.fileKey = @"file";
             uploadParams.fileName = fileName;
+            uploadParams.params = params;
             
             // set later on
             //uploadParams.filePath = dst.path;
