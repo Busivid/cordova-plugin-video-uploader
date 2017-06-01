@@ -202,8 +202,18 @@
         
         [completedTransfers addObject:weakUpload.parameters.progressId];
         
+        // Notify cordova a single upload is complete.
+        NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
+        [dictionary setValue: [NSNumber numberWithInt:100] forKey: @"progress"];
+        [dictionary setValue: weakUpload.parameters.progressId forKey: @"progressId"];
+        [dictionary setValue: @"UPLOADCOMPLETE" forKey: @"type"];
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
+        [result setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:self.command.callbackId];
+        
         if ([transcodingQueue operationCount] == 0 && [uploadQueue operationCount] == 0) {
             NSLog(@"[Done]");
+            // Notify cordova ALL uploads / transcodes are complete.
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:self.command.callbackId];
             
             [self removeBackgroundTask];
