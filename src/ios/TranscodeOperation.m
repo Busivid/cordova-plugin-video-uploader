@@ -79,6 +79,9 @@
     // GPU operations AND a new thread cannot be produced while in the background mode.
     // Wait until we are in the foreground before spawning a new render process.
     while ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
+        if (self.isCancelled) {
+            return;
+        }
         [NSThread sleepForTimeInterval:0.1];
     }
     [exportSession exportAsynchronouslyWithCompletionHandler:completionHandler];
