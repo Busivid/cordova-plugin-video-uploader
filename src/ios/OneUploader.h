@@ -15,6 +15,7 @@
 @property (retain) NSOperationQueue *transcodingQueue;
 @property (retain) NSOperationQueue *uploadQueue;
 
+- (void)abort:(CDVInvokedUrlCommand*)command;
 - (void)applicationDidEnterBackground:(UIApplication *)application;
 - (void)applicationWillEnterForeground:(UIApplication *)application;
 - (void)cleanUp:(CDVInvokedUrlCommand*)command;
