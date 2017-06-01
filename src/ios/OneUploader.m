@@ -192,6 +192,8 @@
         if ([transcodingQueue operationCount] == 0 && [uploadQueue operationCount] == 0) {
             NSLog(@"[Done]");
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:self.command.callbackId];
+            
+            [self removeBackgroundTask];
         }
     }];
     
