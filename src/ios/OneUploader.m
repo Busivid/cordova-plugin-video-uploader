@@ -123,6 +123,19 @@
     
     [transcodingQueue cancelAllOperations];
     [uploadQueue cancelAllOperations];
+    if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
+
+    	// If we are in the background, display the error message as a local push notification
+        UILocalNotification *notification = [[UILocalNotification alloc]init];
+    	notification.alertAction = nil;
+    	notification.soundName = UILocalNotificationDefaultSoundName;
+    	notification.alertBody = message;
+    	notification.soundName = UILocalNotificationDefaultSoundName;
+    	notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:5];
+    	notification.repeatInterval = 0;
+    
+    	[[UIApplication sharedApplication]scheduleLocalNotification:notification];
+    }
     
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:results] callbackId:command.callbackId];
 }
@@ -239,19 +252,7 @@
     if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
     	backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
             NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
-         
-            UILocalNotification *notification = [[UILocalNotification alloc]init];
-            notification.alertAction = nil;
-            notification.soundName = UILocalNotificationDefaultSoundName;
-            notification.alertBody = errorMessage;
-            notification.soundName = UILocalNotificationDefaultSoundName;
-            notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:5];
-            notification.repeatInterval = 0;
-
-            [[UIApplication sharedApplication]scheduleLocalNotification:notification];
-            
             [self handleFatalError:errorMessage];
-            
             [self removeBackgroundTask];
 
     	}];
