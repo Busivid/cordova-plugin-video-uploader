@@ -236,19 +236,22 @@
     // if stuff in queues, request a background task.
     if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
     	backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-            NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
+            // Only display error if we haven't already finished
+            if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
+         	   NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
          
-            UILocalNotification *notification = [[UILocalNotification alloc]init];
-            notification.alertAction = nil;
-            notification.soundName = UILocalNotificationDefaultSoundName;
-            notification.alertBody = errorMessage;
-            notification.soundName = UILocalNotificationDefaultSoundName;
-            notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:5];
-            notification.repeatInterval = 0;
+            	UILocalNotification *notification = [[UILocalNotification alloc]init];
+            	notification.alertAction = nil;
+            	notification.soundName = UILocalNotificationDefaultSoundName;
+            	notification.alertBody = errorMessage;
+            	notification.soundName = UILocalNotificationDefaultSoundName;
+            	notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:5];
+            	notification.repeatInterval = 0;
 
-            [[UIApplication sharedApplication]scheduleLocalNotification:notification];
+            	[[UIApplication sharedApplication]scheduleLocalNotification:notification];
             
-            [self handleFatalError:errorMessage];
+            	[self handleFatalError:errorMessage];
+            }
             
             [self removeBackgroundTask];
 
