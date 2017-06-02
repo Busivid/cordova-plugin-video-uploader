@@ -81,9 +81,11 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
 - (void) cancel {
     [super cancel];
     
-    CDVFileTransferDelegate* delegate = activeTransfers[parameters.progressId];
-    if (delegate != nil) {
-    	[delegate cancelTransfer:delegate.connection];
+    @synchronized (activeTransfers) {
+        while ([activeTransfers count] > 0) {
+            CDVFileTransferDelegate* delegate = [activeTransfers allValues][0];
+            [delegate cancelTransfer:delegate.connection];
+        }
     }
 }
 
@@ -345,19 +347,6 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
     [delegate.connection start];
 }
 
-- (void)abort:(CDVInvokedUrlCommand*)command
-{
-    NSString* objectId = [command argumentAtIndex:0];
-    
-    @synchronized (activeTransfers) {
-        CDVFileTransferDelegate* delegate = activeTransfers[objectId];
-        if (delegate != nil) {
-            [delegate cancelTransfer:delegate.connection];
-            self.errorMessage = @"Connection aborted.";
-        }
-    }
-}
-
 - (NSMutableDictionary*)createFileTransferError:(int)code AndSource:(NSString*)source AndTarget:(NSString*)target
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
@@ -503,6 +492,8 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
             }
         } while (shouldRetry);
     }
+    
+    
     // remove connection for activeTransfers
     @synchronized (command.activeTransfers) {
         [command.activeTransfers removeObjectForKey:progressId];
