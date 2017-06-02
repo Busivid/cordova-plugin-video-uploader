@@ -61,7 +61,9 @@
         
         for(NSDictionary *file in fileOptions) {
             NSString *progressId = file[@"progressId"];
-            NSURL *path = [[NSURL alloc] initWithString:file[@"filePath"]];
+            NSString *pathString = [file[@"filePath"] stringByReplacingOccurrencesOfString:@"file://"
+                                                                        withString:@""];
+            NSURL *path = [[NSURL alloc] initFileURLWithPath:pathString];
             NSNumber *maxSeconds = file[@"maxSeconds"];
             NSString *callbackUrl = file[@"callbackUrl"];
             NSString *fileName = file[@"fileName"];
