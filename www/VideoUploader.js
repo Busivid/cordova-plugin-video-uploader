@@ -11,14 +11,14 @@ exports.compressAndUpload = function (options, success, progress, error) {
 		}
 	};
 
-	exec(win, error, 'OneUploader', 'compressAndUpload', [options]);
+	exec(win, error, 'VideoUploader', 'compressAndUpload', [options]);
 };
 
 exports.cleanUp = function (success, error) {
-	exec(success, error, 'OneUploader', 'cleanUp', []);
+	exec(success, error, 'VideoUploader', 'cleanUp', []);
 };
 
 exports.abort = function(success) {
 	var error = function(){};
-	exec(success, error, 'OneUploader', 'abort', []);
+	exec(success, error, 'VideoUploader', 'abort', []);
 };

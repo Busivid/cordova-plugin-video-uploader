@@ -1,5 +1,5 @@
 #import "AppDelegate+uploader.h"
-#import "OneUploader.h"
+#import "VideoUploader.h"
 
 @implementation AppDelegate (uploader)
 - (id) getCommandInstance:(NSString*)className
@@ -8,12 +8,12 @@
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    OneUploader *oneUploader = [self getCommandInstance:@"OneUploader"];
-    [oneUploader applicationDidEnterBackground:application];
+    VideoUploader *uploader = [self getCommandInstance:@"VideoUploader"];
+    [uploader applicationDidEnterBackground:application];
 }
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
-    OneUploader *oneUploader = [self getCommandInstance:@"OneUploader"];
-    [oneUploader applicationWillEnterForeground:application];
+    VideoUploader *uploader = [self getCommandInstance:@"VideoUploader"];
+    [uploader applicationWillEnterForeground:application];
 }
 @end

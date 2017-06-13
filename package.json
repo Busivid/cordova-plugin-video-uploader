@@ -1,0 +1,25 @@
+{
+  "name": "cordova-plugin-video-uploader",
+  "version": "1.0.0",
+  "description": "",
+  "cordova": {
+    "id": "cordova-plugin-video-uploader",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://git.busivid.com/root/cordova-plugin-video-uploader"
+  },
+  "keywords": [
+    "cordova",
+    "cordova-android",
+    "cordova-ios",
+    "ecosystem:cordova",
+    "video uploader"
+  ],
+  "author": "Busivid Team",
+  "license": "MIT"
+}

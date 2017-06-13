@@ -1,7 +1,6 @@
 #import <Cordova/CDV.h>
 #import "CDVFile.h"
 
-
 @interface UploadParameters: NSObject {}
 @property (nonatomic, copy) NSString* callbackUrl;
 @property (nonatomic, assign) BOOL chunkMode;

@@ -1,21 +1,18 @@
 <?xml version='1.0' encoding='utf-8'?>
-<plugin id="cordova-plugin-one-uploader" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
-    <name>OneUploader</name>
-    <js-module name="OneUploader" src="www/OneUploader.js">
-        <clobbers target="cordova.plugins.OneUploader" />
+<plugin id="cordova-plugin-video-uploader" version="1.0.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>cordova-plugin-video-uploader</name>
+    <js-module name="VideoUploader" src="www/VideoUploader.js">
+        <clobbers target="cordova.plugins.VideoUploader" />
     </js-module>
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
-            <feature name="OneUploader">
-                <param name="ios-package" value="OneUploader"/>
+            <feature name="VideoUploader">
+                <param name="ios-package" value="VideoUploader"/>
             </feature>
         </config-file>
 
         <header-file src="src/ios/AppDelegate+uploader.h" />
         <source-file src="src/ios/AppDelegate+uploader.m" />
-
-        <header-file src="src/ios/OneUploader.h" />
-        <source-file src="src/ios/OneUploader.m" />
 
         <header-file src="src/ios/TranscodeOperation.h" />
         <source-file src="src/ios/TranscodeOperation.m" />
@@ -23,5 +20,7 @@
         <header-file src="src/ios/UploadOperation.h" />
         <source-file src="src/ios/UploadOperation.m" />
 
+        <header-file src="src/ios/VideoUploader.h" />
+        <source-file src="src/ios/VideoUploader.m" />
     </platform>
 </plugin>

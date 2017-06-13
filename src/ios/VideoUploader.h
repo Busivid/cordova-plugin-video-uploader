@@ -1,12 +1,12 @@
 //
-//  OneUploader.h
+//  VideoUploader.h
 //
 //  Created by Cory Thompson on 2017-06-16
 //
 
 #import <Cordova/CDV.h>
 
-@interface OneUploader : CDVPlugin {
+@interface VideoUploader : CDVPlugin {
 }
 
 @property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskID;

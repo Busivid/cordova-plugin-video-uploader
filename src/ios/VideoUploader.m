@@ -1,15 +1,15 @@
 //
-//  OneUploader.m
+//  VideoUploader.m
 //
 //  Created by Cory Thompson on 2017-06-16
 //
 
 #import <Cordova/CDV.h>
-#import "OneUploader.h"
+#import "VideoUploader.h"
 #import "UploadOperation.h"
 #import "TranscodeOperation.h"
 
-@implementation OneUploader
+@implementation VideoUploader
 
 @synthesize backgroundTaskID;
 @synthesize command;
@@ -21,12 +21,11 @@
  * Functions available via Cordova
  */
 - (void) cleanUp:(CDVInvokedUrlCommand*)cmd {
-    NSLog(@"[OneUploader]: cleanUp called");
+    NSLog(@"[VideoUploader]: cleanUp called");
 
-    
     [self.commandDelegate runInBackground:^{
         NSFileManager *fileMgr = [NSFileManager defaultManager];
-        
+
         // delete compressed files from cache directory.
         NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
         NSString *videoDir = [cacheDir stringByAppendingPathComponent:@"mp4"];
@@ -36,7 +35,7 @@
                 [fileMgr removeItemAtPath:[videoDir stringByAppendingPathComponent:filename] error:NULL];
             }
         }
-        
+
         // delete temp files from picker / capture interface.
         NSString *tempDir = [NSTemporaryDirectory()stringByStandardizingPath];
         NSArray *tempFilesArray = [fileMgr contentsOfDirectoryAtPath:tempDir error:nil];
@@ -45,53 +44,51 @@
                 [fileMgr removeItemAtPath:[tempDir stringByAppendingPathComponent:tempFile] error:NULL];
             }
         }
-        
+
         [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:cmd.callbackId];
     }];
 }
 
 - (void) compressAndUpload:(CDVInvokedUrlCommand*)cmd {
-    NSLog(@"[OneUploader]: compressAndUpload called");
-    
+    NSLog(@"[VideoUploader]: compressAndUpload called");
+
     completedTransfers = [[NSMutableArray alloc] init];
-    
+
     [self.commandDelegate runInBackground:^{
         self.command = cmd;
         NSArray *fileOptions = [command.arguments objectAtIndex:0];
-        
+
         for(NSDictionary *file in fileOptions) {
-            NSString *progressId = file[@"progressId"];
-            NSString *pathString = [file[@"filePath"] stringByReplacingOccurrencesOfString:@"file://"
-                                                                        withString:@""];
-            NSURL *path = [[NSURL alloc] initFileURLWithPath:pathString];
-            NSNumber *maxSeconds = file[@"maxSeconds"];
             NSString *callbackUrl = file[@"callbackUrl"];
             NSString *fileName = file[@"fileName"];
-            NSString *uploadUrl = file[@"uploadUrl"];
+            NSString *filePathString = [file[@"filePath"] stringByReplacingOccurrencesOfString:@"file://"
+                                                                        withString:@""];
+            NSNumber *maxSeconds = file[@"maxSeconds"];
             NSDictionary *params = file[@"params"];
+            NSString *progressId = file[@"progressId"];
+            NSString *uploadUrl = file[@"uploadUrl"];
+
+            NSURL *filePath = [[NSURL alloc] initFileURLWithPath:filePathString];
 
             UploadParameters *uploadParams = [[UploadParameters alloc] init];
             uploadParams.callbackUrl = callbackUrl;
             uploadParams.chunkMode = true;
             uploadParams.fileKey = @"file";
             uploadParams.fileName = fileName;
-            uploadParams.params = params;
-            
-            // set later on
-            //uploadParams.filePath = dst.path;
-            
+            // uploadParams.filePath = filePath;
             uploadParams.mimeType = @"video/mpeg";
+            uploadParams.params = params;
+            uploadParams.progressId = progressId;
             uploadParams.timeout = [[NSNumber alloc] initWithInt:1000];
             uploadParams.uploadUrl = uploadUrl;
-            uploadParams.progressId = progressId;
-            
-            TranscodeOperation *transcodeOperation = [self getTranscodeOperationWithSrc:path maxSeconds:[maxSeconds floatValue] progressId:progressId uploadParams:uploadParams];
+
+            TranscodeOperation *transcodeOperation = [self getTranscodeOperationWithSrc:filePath maxSeconds:[maxSeconds floatValue] progressId:progressId uploadParams:uploadParams];
             if (transcodeOperation == nil) {
                 // If nil, an error has occured and event has already been raised
                 // just stop adding stuff to queue.
                 return;
             }
-            
+
             [transcodingQueue addOperation:transcodeOperation];
         }
     }];
@@ -112,17 +109,17 @@
     CFUUIDRef newUniqueId = CFUUIDCreate(kCFAllocatorDefault);
     NSString * uuidString = (__bridge_transfer NSString*)CFUUIDCreateString(kCFAllocatorDefault, newUniqueId);
     CFRelease(newUniqueId);
-    
+
     return uuidString;
 }
 
 - (void) handleFatalError:(NSString*)message {
-    NSLog(@"[OneUploader]: handleFatalError called");
-    
+    NSLog(@"[VideoUploader]: handleFatalError called");
+
     NSMutableDictionary *results = [NSMutableDictionary dictionaryWithCapacity:2];
     [results setObject:message forKey:@"message"];
     [results setObject:completedTransfers forKey:@"completedTransfers"];
-    
+
     [transcodingQueue cancelAllOperations];
     [uploadQueue cancelAllOperations];
     if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
@@ -135,15 +132,15 @@
     	notification.soundName = UILocalNotificationDefaultSoundName;
     	notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:5];
     	notification.repeatInterval = 0;
-    
+
     	[[UIApplication sharedApplication]scheduleLocalNotification:notification];
     }
-    
+
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:results] callbackId:command.callbackId];
 }
 
 - (TranscodeOperation*) getTranscodeOperationWithSrc:(NSURL*)src maxSeconds:(Float64)maxSeconds progressId:(NSString*)progressId uploadParams:(UploadParameters*)uploadParams {
-    NSLog(@"[OneUploader]: getTranscodeOperationWithSrc called");
+    NSLog(@"[VideoUploader]: getTranscodeOperationWithSrc called");
 
     // Ensure the cache directory exists.
     NSFileManager *fileMgr = [NSFileManager defaultManager];
@@ -153,11 +150,11 @@
         [self handleFatalError:@"Unable to create output folder for compression."];
         return nil;
     }
-    
+
     // Get a unique compressed file name.
     NSString *videoOutput = [videoDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [NSString stringWithFormat:@"%@_compressed", [self getUUID]], @"mp4"]];
     NSURL *dst = [NSURL fileURLWithPath:videoOutput];
-    
+
     //Initialise transcodeOperation.
     TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithSrc:src dst:dst maxSeconds:maxSeconds progressId:progressId];
     __weak TranscodeOperation *weakTranscode = transcodeOperation;
@@ -166,44 +163,44 @@
             [self handleFatalError:weakTranscode.errorMessage];
             return;
         }
-        
+
         if (weakTranscode.isCancelled) {
             return;
         }
-        
+
         // queue upload
         uploadParams.filePath = dst.path;
         UploadOperation *uploadOperation = [self getUploadOperationWithSrc:uploadParams];
         [uploadQueue addOperation:uploadOperation];
     }];
-    
+
     [transcodeOperation setCommandDelegate:self.commandDelegate];
     [transcodeOperation setCallbackId: command.callbackId];
-    
+
     return transcodeOperation;
 }
 
 - (UploadOperation*)getUploadOperationWithSrc:(UploadParameters*)uploadParams {
-    NSLog(@"[OneUploader]: getUploadOperationWithSrc called");
-    
+    NSLog(@"[VideoUploader]: getUploadOperationWithSrc called");
+
     UploadOperation *uploadOperation = [[UploadOperation alloc] init];
     [uploadOperation setCommandDelegate:self.commandDelegate];
     [uploadOperation setCallbackId: command.callbackId];
     [uploadOperation setParameters:uploadParams];
-    
+
     __weak UploadOperation *weakUpload = uploadOperation;
     [uploadOperation setCompletionBlock:^{
         if (weakUpload.errorMessage != nil) {
             [self handleFatalError:weakUpload.errorMessage];
             return;
         }
-        
+
         if (weakUpload.isCancelled){
             return;
         }
-        
+
         [completedTransfers addObject:weakUpload.parameters.progressId];
-        
+
         // Notify cordova a single upload is complete.
         NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
         [dictionary setValue: [NSNumber numberWithInt:100] forKey: @"progress"];
@@ -212,54 +209,53 @@
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
         [result setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:result callbackId:self.command.callbackId];
-        
+
         if ([transcodingQueue operationCount] == 0 && [uploadQueue operationCount] == 0) {
             NSLog(@"[Done]");
             // Notify cordova ALL uploads / transcodes are complete.
             [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:self.command.callbackId];
-            
+
             [self removeBackgroundTask];
         }
     }];
-    
+
     return uploadOperation;
 }
 
 - (void) removeBackgroundTask {
-    NSLog(@"[OneUploader]: removeBackgroundTask called");
-    
+    NSLog(@"[VideoUploader]: removeBackgroundTask called");
+
     if (backgroundTaskID != UIBackgroundTaskInvalid) {
         [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskID];
         backgroundTaskID = UIBackgroundTaskInvalid;
     }
 }
 
-
 /*
  * Events
  */
 
 - (void) pluginInitialize {
-    NSLog(@"[OneUploader]: pluginInitalize called");
-    
+    NSLog(@"[VideoUploader]: pluginInitalize called");
+
     backgroundTaskID = UIBackgroundTaskInvalid;
-    
+
     transcodingQueue = [[NSOperationQueue alloc] init];
     transcodingQueue.maxConcurrentOperationCount = 1;
-    
+
     uploadQueue = [[NSOperationQueue alloc] init];
     uploadQueue.maxConcurrentOperationCount = 1;
 }
 
 - (void)applicationWillEnterForeground:(UIApplication*)application {
-    NSLog(@"[OneUploader]: applicationWillEnterForeground called");
+    NSLog(@"[VideoUploader]: applicationWillEnterForeground called");
 
     [self removeBackgroundTask];
 }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application {
-    NSLog(@"[OneUploader]: applicationDidEnterBackground called");
-    
+    NSLog(@"[VideoUploader]: applicationDidEnterBackground called");
+
     // if stuff in queues, request a background task.
     if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
     	backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{

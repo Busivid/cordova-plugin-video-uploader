@@ -33,7 +33,7 @@
         [dictionary setValue: @"TRANSCODING" forKey: @"type"];
 
     	CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
-    
+
     	[result setKeepCallbackAsBool:YES];
     	[self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
@@ -50,7 +50,7 @@
 - (void)main {
     NSLog(@"[TranscodeOperation]: inputFilePath: %@", srcPath);
     NSLog(@"[TranscodeOperation]: outputPath: %@", dstPath);
-    
+
     if (self.isCancelled) {
         return;
     }
@@ -89,7 +89,7 @@
     do {
         double progress = [exportSession progress] * 100;
         [self reportProgress:[NSNumber numberWithDouble:progress]];
-        
+
         // Wait 1 second or until the the semaphore is called from completionHandler above.
         double delayInSeconds = 1;
         dispatch_time_t dispatchTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
@@ -102,7 +102,7 @@
             [self reportProgress:[NSNumber numberWithInt:100]];
         }
     }
-    
+
     switch ([exportSession status]) {
         case AVAssetExportSessionStatusCompleted:
             NSLog(@"[TranscodeOperation]: Export Complete %ld %@", (long)exportSession.status, exportSession.error);
