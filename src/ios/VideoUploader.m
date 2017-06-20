@@ -40,7 +40,7 @@
         NSString *tempDir = [NSTemporaryDirectory()stringByStandardizingPath];
         NSArray *tempFilesArray = [fileMgr contentsOfDirectoryAtPath:tempDir error:nil];
         for (NSString *tempFile in tempFilesArray) {
-            if ([tempFile hasPrefix:@"cdv_photo"]) {
+            if ([tempFile hasPrefix:@"cdv_photo"] || [tempFile hasSuffix:@".MOV"]) {
                 [fileMgr removeItemAtPath:[tempDir stringByAppendingPathComponent:tempFile] error:NULL];
             }
         }
