@@ -38,6 +38,7 @@ Performs the following steps
       'maxSeconds': '(int) Maximum video length in seconds',
       'params': 'HTTP Request variables sent to both the callbackUrl and uploadUrl',
       'progressId': 'Some unique string, used to facilitate multiple concurrent operations',
+      'timeout': '(int) Timeout value for the upload request',
       'uploadUrl': 'Url to POST the transcoded file to'
     };
 

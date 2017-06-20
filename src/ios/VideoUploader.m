@@ -66,6 +66,7 @@
             NSNumber *maxSeconds = file[@"maxSeconds"];
             NSDictionary *params = file[@"params"];
             NSString *progressId = file[@"progressId"];
+            NSNumber *timeout = file[@"timeout"];
             NSString *uploadUrl = file[@"uploadUrl"];
 
             NSURL *filePath = [[NSURL alloc] initFileURLWithPath:filePathString];
@@ -79,7 +80,7 @@
             uploadParams.mimeType = @"video/mpeg";
             uploadParams.params = params;
             uploadParams.progressId = progressId;
-            uploadParams.timeout = [[NSNumber alloc] initWithInt:1000];
+            uploadParams.timeout = timeout;
             uploadParams.uploadUrl = uploadUrl;
 
             TranscodeOperation *transcodeOperation = [self getTranscodeOperationWithSrc:filePath maxSeconds:[maxSeconds floatValue] progressId:progressId uploadParams:uploadParams];
