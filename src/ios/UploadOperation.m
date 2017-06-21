@@ -565,8 +565,8 @@ static CFIndex WriteDataToStream(NSData* data, CFWriteStreamRef stream)
 {
 
     NSNumber* progress = [NSNumber numberWithFloat:floorf(100.0f * totalBytesWritten / totalBytesExpectedToWrite)];
-    if (progress > lastReportedProgress) {
-    	NSMutableDictionary* uploadProgress = [NSMutableDictionary dictionaryWithCapacity:1];
+    if ([progress intValue] > [lastReportedProgress intValue]) {
+	NSMutableDictionary* uploadProgress = [NSMutableDictionary dictionaryWithCapacity:1];
     	NSLog(@"File transfer progress (%@) %3.0f%%", self.progressId, [progress floatValue]);
 
     	[uploadProgress setObject:progress forKey:@"progress"];
