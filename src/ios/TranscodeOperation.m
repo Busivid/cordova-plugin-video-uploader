@@ -12,14 +12,16 @@
 @synthesize srcPath;
 @synthesize progressId;
 @synthesize exportSession;
+@synthesize fileLengthLimit;
 
-- (id)initWithSrc:(NSURL *)src dst:(NSURL*)dst maxSeconds:(Float64)seconds progressId:(NSString*)pId
+- (id)initWithSrc:(NSURL *)src dst:(NSURL*)dst maxSeconds:(Float64)seconds fileLengthLimit:(NSNumber*)lengthLimit progressId:(NSString*)pId
 {
     if (![super init]) return nil;
     [self setDstPath:dst];
     [self setMaxSeconds:seconds];
     [self setSrcPath:src];
     [self setProgressId:pId];
+    [self setFileLengthLimit:lengthLimit];
     return self;
 }
 
@@ -61,8 +63,8 @@
     exportSession.outputURL = dstPath;
     exportSession.outputFileType = AVFileTypeQuickTimeMovie;
     exportSession.shouldOptimizeForNetworkUse = YES;
-    exportSession.fileLengthLimit = 1073741824;
-
+    exportSession.fileLengthLimit = [fileLengthLimit longLongValue];
+ 
     int32_t preferredTimeScale = 600;
     CMTime startTime = CMTimeMakeWithSeconds(0, preferredTimeScale);
     CMTime stopTime = CMTimeMakeWithSeconds(maxSeconds, preferredTimeScale);

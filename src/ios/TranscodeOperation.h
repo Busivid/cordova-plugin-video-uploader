@@ -19,11 +19,12 @@
 @property(retain) NSURL *dstPath;
 @property(retain) NSURL *srcPath;
 @property(retain) NSString *errorMessage;
+@property(retain) NSNumber *fileLengthLimit;
 
 @property(retain) AVAssetExportSession *exportSession;
 
 @property (nonatomic, weak) id <CDVCommandDelegate> commandDelegate;
 
-- (id)initWithSrc:(NSURL *)src dst:(NSURL*)dst maxSeconds:(Float64)maxSeconds progressId:(NSString*)progressId;
+- (id)initWithSrc:(NSURL *)src dst:(NSURL*)dst maxSeconds:(Float64)seconds fileLengthLimit:(NSNumber*)lengthLimit progressId:(NSString*)pId;
 
 @end
