@@ -61,6 +61,7 @@
     exportSession.outputURL = dstPath;
     exportSession.outputFileType = AVFileTypeQuickTimeMovie;
     exportSession.shouldOptimizeForNetworkUse = YES;
+    exportSession.fileLengthLimit = 1073741824;
 
     int32_t preferredTimeScale = 600;
     CMTime startTime = CMTimeMakeWithSeconds(0, preferredTimeScale);
