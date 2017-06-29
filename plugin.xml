@@ -4,6 +4,14 @@
     <js-module name="VideoUploader" src="www/VideoUploader.js">
         <clobbers target="cordova.plugins.VideoUploader" />
     </js-module>
+    <platform name="android">
+        <config-file parent="/*" target="config.xml">
+            <feature name="VideoUploader">
+                <param name="android-package" value="com.busivid.cordova.videouploader.VideoUploader"/>
+            </feature>
+        </config-file>
+        <source-file src="src/android/VideoUploader.java" target-dir="src/com/busivid/cordova/videouploader" />
+    </platform>
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
             <feature name="VideoUploader">
