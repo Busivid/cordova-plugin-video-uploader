@@ -69,12 +69,6 @@
             NSNumber *timeout = file[@"timeout"];
             NSString *uploadUrl = file[@"uploadUrl"];
             
-            NSNumber *fileLengthLimit = file[@"fileLengthLimit"];
-            if (fileLengthLimit == nil) {
-                //default the value to no limit
-                fileLengthLimit = [NSNumber numberWithInt:0];
-            }
-
             NSURL *filePath = [[NSURL alloc] initFileURLWithPath:filePathString];
 
             UploadParameters *uploadParams = [[UploadParameters alloc] init];
@@ -89,7 +83,7 @@
             uploadParams.timeout = timeout;
             uploadParams.uploadUrl = uploadUrl;
 
-            TranscodeOperation *transcodeOperation = [self getTranscodeOperationWithSrc:filePath maxSeconds:[maxSeconds floatValue] fileLengthLimit:fileLengthLimit progressId:progressId uploadParams:uploadParams];
+            TranscodeOperation *transcodeOperation = [self getTranscodeOperationWithSrc:filePath maxSeconds:[maxSeconds floatValue] progressId:progressId uploadParams:uploadParams];
             if (transcodeOperation == nil) {
                 // If nil, an error has occured and event has already been raised
                 // just stop adding stuff to queue.
@@ -146,7 +140,7 @@
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:results] callbackId:command.callbackId];
 }
 
-- (TranscodeOperation*) getTranscodeOperationWithSrc:(NSURL*)src maxSeconds:(Float64)maxSeconds fileLengthLimit:(NSNumber*)fileLengthLimit progressId:(NSString*)progressId uploadParams:(UploadParameters*)uploadParams {
+- (TranscodeOperation*) getTranscodeOperationWithSrc:(NSURL*)src maxSeconds:(Float64)maxSeconds progressId:(NSString*)progressId uploadParams:(UploadParameters*)uploadParams {
     NSLog(@"[VideoUploader]: getTranscodeOperationWithSrc called");
 
     // Ensure the cache directory exists.
@@ -163,7 +157,7 @@
     NSURL *dst = [NSURL fileURLWithPath:videoOutput];
 
     //Initialise transcodeOperation.
-    TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithSrc:src dst:dst maxSeconds:maxSeconds fileLengthLimit:fileLengthLimit progressId:progressId];
+    TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithSrc:src dst:dst maxSeconds:maxSeconds progressId:progressId];
     __weak TranscodeOperation *weakTranscode = transcodeOperation;
     [transcodeOperation setCompletionBlock:^{
         if (weakTranscode.errorMessage != nil) {
