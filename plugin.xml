@@ -4,6 +4,26 @@
     <js-module name="VideoUploader" src="www/VideoUploader.js">
         <clobbers target="cordova.plugins.VideoUploader" />
     </js-module>
+    <platform name="android">
+        <config-file parent="/*" target="config.xml">
+            <feature name="VideoUploader">
+                <param name="android-package" value="com.busivid.cordova.videouploader.VideoUploader"/>
+            </feature>
+        </config-file>
+
+        <dependency id="cordova-plugin-file-transfer" url="https://github.com/Busivid/cordova-plugin-file-transfer" />
+
+        <source-file src="src/android/CustomAndroidFormatStrategy.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/FileTransferCallbackContext.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/TranscodeOperation.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/TranscodeOperationCallback.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/UploadOperation.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/UploadOperationCallback.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/Utils.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/VideoUploader.java" target-dir="src/com/busivid/cordova/videouploader" />
+
+        <framework src="src/android/build.gradle" custom="true" type="gradleReference" />
+    </platform>
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
             <feature name="VideoUploader">
