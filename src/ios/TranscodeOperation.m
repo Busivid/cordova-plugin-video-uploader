@@ -1,50 +1,39 @@
-#import "TranscodeOperation.h"
-#import <Foundation/Foundation.h>
 #import <AVFoundation/AVFoundation.h>
+#import <Foundation/Foundation.h>
+#import "TranscodeOperation.h"
 
 @implementation TranscodeOperation
 
-@synthesize callbackId;
 @synthesize commandDelegate;
-@synthesize dstPath;
 @synthesize errorMessage;
-@synthesize maxSeconds;
-@synthesize srcPath;
-@synthesize progressId;
-@synthesize exportSession;
-
-- (id)initWithSrc:(NSURL *)src dst:(NSURL*)dst maxSeconds:(Float64)seconds progressId:(NSString*)pId
-{
-    if (![super init]) return nil;
-    [self setDstPath:dst];
-    [self setMaxSeconds:seconds];
-    [self setSrcPath:src];
-    [self setProgressId:pId];
-    return self;
-}
-
-- (void)reportProgress:(NSNumber*)progress {
-    NSLog(@"%@", [NSString stringWithFormat:@"AVAssetExport running progress=%3.2f%%", [progress doubleValue]]);
-
-    if (self.commandDelegate != NULL && self.callbackId != NULL) {
-    	NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
-    	[dictionary setValue: progress forKey: @"progress"];
-        [dictionary setValue: progressId forKey: @"progressId"];
-        [dictionary setValue: @"TRANSCODING" forKey: @"type"];
-
-    	CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
-
-    	[result setKeepCallbackAsBool:YES];
-    	[self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    }
-
-}
 
 - (void)cancel {
     [super cancel];
     if (exportSession != nil) {
         [exportSession cancelExport];
     }
+}
+
+- (id)initWithFilePath:(NSURL*)src dst:(NSURL*)dst options:(NSDictionary *)options commandDelegate:(id <CDVCommandDelegate>)cmdDelegate cordovaCallbackId:(NSString*)callbackId
+{
+    if (![super init])
+        return nil;
+    
+    NSLog(@"Transcode options %@", options);
+    commandDelegate = cmdDelegate;
+    cordovaCallbackId = callbackId;
+    dstPath = dst;
+    progressId = options[@"progressId"];
+    srcPath = [NSURL URLWithString:options[@"filePath"]];
+    videoDuration = options[@"maxSeconds"];
+
+    // Fields that can be used by android version, yet are not implemented yet in iOS.
+    //fps = options["@fps"];
+    //height = options[@"height"];
+    //videoBitrate = options[@"videoBitrate"];
+    //width = options[@"width"];
+    
+    return self;
 }
 
 - (void)main {
@@ -54,7 +43,7 @@
     if (self.isCancelled) {
         return;
     }
-
+    
     AVURLAsset *avAsset = [AVURLAsset URLAssetWithURL:srcPath options:nil];
 
     exportSession = [[AVAssetExportSession alloc]initWithAsset:avAsset presetName: AVAssetExportPreset1280x720];
@@ -64,7 +53,7 @@
  
     int32_t preferredTimeScale = 600;
     CMTime startTime = CMTimeMakeWithSeconds(0, preferredTimeScale);
-    CMTime stopTime = CMTimeMakeWithSeconds(maxSeconds, preferredTimeScale);
+    CMTime stopTime = CMTimeMakeWithSeconds([videoDuration floatValue], preferredTimeScale);
     CMTimeRange exportTimeRange = CMTimeRangeFromTimeToTime(startTime, stopTime);
     exportSession.timeRange = exportTimeRange;
 
@@ -96,11 +85,9 @@
         dispatch_semaphore_wait(sessionWaitSemaphore, dispatchTime);
     } while( [exportSession status] < AVAssetExportSessionStatusCompleted );
 
-    // We need to ensure a status progress of 100 was sent at 	some point.
+    // We need to ensure a status progress of 100 was sent at some point.
     if ([exportSession status] == AVAssetExportSessionStatusCompleted) {
-        if (self.commandDelegate != NULL && self.callbackId != NULL) {
-            [self reportProgress:[NSNumber numberWithInt:100]];
-        }
+           [self reportProgress:[NSNumber numberWithInt:100]];
     }
 
     switch ([exportSession status]) {
@@ -117,6 +104,23 @@
         default:
             NSLog(@"[TranscodeOperation]: Export default in switch");
             break;
+    }
+}
+
+// Forwards progress up to Javascript.
+- (void)reportProgress:(NSNumber*)progress {
+    NSLog(@"%@", [NSString stringWithFormat:@"AVAssetExport running progress=%3.2f%%", [progress doubleValue]]);
+    
+    if (self.commandDelegate != nil && cordovaCallbackId != nil) {
+        NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
+        [dictionary setValue: progress forKey: @"progress"];
+        [dictionary setValue: progressId forKey: @"progressId"];
+        [dictionary setValue: @"TRANSCODING" forKey: @"type"];
+        
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
+        
+        [result setKeepCallbackAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:cordovaCallbackId];
     }
 }
 

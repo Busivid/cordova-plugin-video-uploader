@@ -7,13 +7,13 @@
 #import <Cordova/CDV.h>
 
 @interface VideoUploader : CDVPlugin {
+    UIBackgroundTaskIdentifier backgroundTaskID;
+    NSString *latestCallbackId;
+    NSOperationQueue *transcodingQueue;
+    NSOperationQueue *uploadQueue;
 }
 
-@property (nonatomic, assign) UIBackgroundTaskIdentifier backgroundTaskID;
-@property (retain) CDVInvokedUrlCommand *command;
 @property (copy) NSMutableArray *completedTransfers;
-@property (retain) NSOperationQueue *transcodingQueue;
-@property (retain) NSOperationQueue *uploadQueue;
 
 - (void)abort:(CDVInvokedUrlCommand*)command;
 - (void)applicationDidEnterBackground:(UIApplication *)application;
