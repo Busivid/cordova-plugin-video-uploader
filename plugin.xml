@@ -40,7 +40,7 @@
         <header-file src="src/ios/UploadOperation.h" />
         <source-file src="src/ios/UploadOperation.m" />
 
-        <header-file src="src/ios/UploadOperationCommandDelegate.h">
+        <header-file src="src/ios/UploadOperationCommandDelegate.h" />
         <source-file src="src/ios/UploadOperationCommandDelegate.m" />
 
         <header-file src="src/ios/VideoUploader.h" />
