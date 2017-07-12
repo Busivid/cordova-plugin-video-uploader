@@ -32,10 +32,10 @@ class UploadOperation implements Runnable {
 		final long sourceLength = source.length();
 
 		final int chunkSize = _options.optInt("upload_chunk_size", DEFAULT_UPLOAD_CHUNK_SIZE);
-		final int chunks = (int) (sourceLength / chunkSize);
+		final int chunks = (int) (sourceLength / chunkSize) + 1;
 
 		for (int i = 0; i < chunks; i++) {
-			final String callbackId = _uploadOperationCallback.getProgressId() + ".part" + i + 1;
+			final String callbackId = _uploadOperationCallback.getProgressId() + ".part" + (i + 1);
 			final long offset = chunkSize * i;
 
 			JSONArray args = new JSONArray();
