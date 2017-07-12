@@ -5,15 +5,27 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.RunnableFuture;
+
 class FileTransferCallbackContext extends CallbackContext {
-	private final String TAG = VideoUploader.TAG;
+	private static final String TAG = VideoUploader.TAG;
 
-	private final IUploadOperationCallback _uploadOperationCallback;
+	private final IEventListener _completeEvent;
+	private final IStringEventListener _errorEvent;
+	private final ILongEventListener _progressEvent;
+	private String _lastErrorMessage;
 
-	FileTransferCallbackContext(IUploadOperationCallback uploadOperationCallback) {
-		super(uploadOperationCallback.getProgressId(), null);
+	public String getLastErrorMessage() {
+		return _lastErrorMessage;
+	}
 
-		_uploadOperationCallback = uploadOperationCallback;
+	FileTransferCallbackContext(String callbackId, IEventListener completeEvent, IStringEventListener errorEvent, ILongEventListener progressEvent) {
+		super(callbackId, null);
+
+		_completeEvent = completeEvent;
+		_errorEvent = errorEvent;
+		_progressEvent = progressEvent;
 	}
 
 	@Override
@@ -22,7 +34,8 @@ class FileTransferCallbackContext extends CallbackContext {
 
 		// Catch FileTransferProgress events -> mutate into VideoUploader Progress Event
 		if (status != PluginResult.Status.OK.ordinal()) {
-			_uploadOperationCallback.onUploadError(pluginResult.getMessage());
+			_lastErrorMessage = pluginResult.getMessage();
+			_errorEvent.invoke(_lastErrorMessage);
 			return;
 		}
 
@@ -31,20 +44,15 @@ class FileTransferCallbackContext extends CallbackContext {
 
 			// cordova-plugin-file-transfer JS uses the presence of 'lengthComputable' to differentiate between onprogress() and successcallback()
 			if (!fileTransferResult.has("lengthComputable")) {
-				_uploadOperationCallback.onUploadComplete();
+				_completeEvent.invoke();
 				return;
 			}
 
 			long loaded = fileTransferResult.getLong("loaded");
-			long total = fileTransferResult.getLong("total");
-
-			double percentage = total == 0
-					? 0
-					: loaded / (double)total * 100;
-
-			_uploadOperationCallback.onUploadProgress(percentage);
+			_progressEvent.invoke(loaded);
 		} catch (JSONException jsonException) {
-			_uploadOperationCallback.onUploadError(jsonException.toString());
+			_lastErrorMessage = pluginResult.getMessage();
+			_errorEvent.invoke(_lastErrorMessage);
 		}
 	}
 }

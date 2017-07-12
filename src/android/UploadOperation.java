@@ -9,7 +9,8 @@ import org.json.JSONObject;
 import java.io.File;
 
 class UploadOperation implements Runnable {
-	private final String TAG = VideoUploader.TAG;
+	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = 100 * 1024 * 1024; // 100 MB
+	private static final String TAG = VideoUploader.TAG;
 
 	private final FileTransfer _fileTransfer;
 	private final JSONObject _options;
@@ -27,28 +28,73 @@ class UploadOperation implements Runnable {
 
 	@Override
 	public void run() {
-		File source = new File(_source);
+		final File source = new File(_source);
+		final long sourceLength = source.length();
 
-		JSONArray args = new JSONArray();
-		args.put(_source);
-		args.put(_target);
-		args.put("file");									// fileKey
-		args.put(source.getName());							// fileName
-		args.put("video/mp4");								// mimeType
-		args.put(_options.optJSONObject("params"));			// params
-		args.put(false);									// trustEveryone
-		args.put(false);									// chunkedMode
-		args.put(_options.optJSONObject("headers"));		// headers
-		args.put(_uploadOperationCallback.getProgressId());	// objectId
-		args.put("POST");									// httpMethod
-		args.put(1800);										// timeout
+		final int chunkSize = _options.optInt("upload_chunk_size", DEFAULT_UPLOAD_CHUNK_SIZE);
+		final int chunks = (int) (sourceLength / chunkSize);
 
-		try {
-			_fileTransfer.execute("upload", args, new FileTransferCallbackContext(_uploadOperationCallback));
-		} catch (Throwable e) {
-			LOG.d(TAG, "upload exception ", e);
+		for (int i = 0; i < chunks; i++) {
+			final String callbackId = _uploadOperationCallback.getProgressId() + ".part" + i + 1;
+			final long offset = chunkSize * i;
 
-			_uploadOperationCallback.onUploadError(e.toString());
+			JSONArray args = new JSONArray();
+			args.put(_source);
+			args.put(_target);
+			args.put("file");								// fileKey
+			args.put(source.getName());						// fileName
+			args.put("video/mp4");							// mimeType
+			args.put(_options.optJSONObject("params"));		// params
+			args.put(false);								// trustEveryone
+			args.put(false);								// chunkedMode
+			args.put(_options.optJSONObject("headers"));	// headers
+			args.put(callbackId);							// objectId
+			args.put("POST");								// httpMethod
+			args.put(1800);									// timeout
+			args.put(offset);								// byte offset from start of file
+			args.put(chunkSize);							// bytes to upload
+
+			final Object lock = new Object();
+			try {
+				FileTransferCallbackContext fileTransferCallbackContext = new FileTransferCallbackContext(
+					callbackId,
+					new IEventListener() {
+						// Completed
+						@Override
+						public void invoke() {
+							lock.notify();
+						}
+					}, new IStringEventListener() {
+						// Error
+						@Override
+						public void invoke(String value) {
+							lock.notify();
+						}
+					}, new ILongEventListener() {
+						// Progress
+						@Override
+						public void invoke(long value) {
+							long totalBytesUploaded = offset + value;
+							double percentage = (double) totalBytesUploaded / sourceLength * 100;
+							_uploadOperationCallback.onUploadProgress(percentage);
+						}
+					}
+				);
+
+				_fileTransfer.execute("upload", args, fileTransferCallbackContext);
+				lock.wait();
+
+				String lastErrorMessage = fileTransferCallbackContext.getLastErrorMessage();
+				if (lastErrorMessage != null)
+					throw new Exception(lastErrorMessage);
+			} catch (Throwable e) {
+				LOG.d(TAG, "upload exception ", e);
+
+				_uploadOperationCallback.onUploadError(e.toString());
+				break;
+			}
 		}
+
+		_uploadOperationCallback.onUploadComplete();
 	}
 }

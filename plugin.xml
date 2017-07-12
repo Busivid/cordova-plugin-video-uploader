@@ -15,6 +15,9 @@
 
         <source-file src="src/android/CustomAndroidFormatStrategy.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/FileTransferCallbackContext.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/IEventListener.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/ILongEventListener.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/IStringEventListener.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/TranscodeOperation.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/TranscodeOperationCallback.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/UploadOperation.java" target-dir="src/com/busivid/cordova/videouploader" />
