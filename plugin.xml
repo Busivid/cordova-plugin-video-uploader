@@ -31,6 +31,8 @@
             </feature>
         </config-file>
 
+        <dependency id="cordova-plugin-file-transfer" url="https://github.com/Busivid/cordova-plugin-file-transfer" />
+
         <header-file src="src/ios/AppDelegate+uploader.h" />
         <source-file src="src/ios/AppDelegate+uploader.m" />
 
