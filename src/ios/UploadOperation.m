@@ -1,6 +1,5 @@
 #import "UploadOperation.h"
-
-#import "UploadOperationCommandDelegate.h";
+#import "UploadOperationCommandDelegate.h"
 
 @implementation UploadOperation
 @synthesize commandDelegate;
@@ -41,39 +40,52 @@
     if (self.isCancelled) {
         return;
     }
-	
-    //Order is important.
-    NSMutableArray *args = [[NSMutableArray alloc] init];
-    [args addObject:source.path];
-    [args addObject:target.absoluteString];
-    [args addObject:@"file"];
-    [args addObject:@"test.mp4"];
-    [args addObject:@"video/mp4"];
-    [args addObject:options[@"params"]];
-    [args addObject:[NSNumber numberWithInt:0]]	;
-    [args addObject:[NSNumber numberWithInt:1]];
-    [args addObject:[[NSDictionary alloc] init]];
-    [args addObject:options[@"progressId"]];
-    [args addObject:@"POST"];
-    [args addObject:options[@"timeout"]];
     
-    CDVInvokedUrlCommand* commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
-    dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
+    
+    int chunkSize = [options[@"chunkSize"] intValue];
+    unsigned long long fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:source.path error:nil] fileSize];
+    NSString *fileName = [[source path] lastPathComponent];
 
-    UploadOperationCommandDelegate* delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate withProgressId:options[@"progressId"]];
-    [delegate setCompletionBlock:^(NSString* errorMsg){
-        errorMessage = errorMsg;
-        dispatch_semaphore_signal(sessionWaitSemaphore);
-    }];
-    [fileTransfer setCommandDelegate:delegate];
-    
-    [fileTransfer upload:commandOptions];
-    dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
-    
-    if (errorMessage != nil)
-        return;
-    
-    if (uploadCompleteUrl != nil) {
+    int requiredChunkCount = ceil(fileSize / chunkSize);
+    for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
+        //Order is important.
+        NSMutableArray *args = [[NSMutableArray alloc] init];
+        [args addObject:source.path];
+        [args addObject:target.absoluteString];
+        [args addObject:@"file"];
+        [args addObject:fileName];
+        [args addObject:@"video/mp4"];
+        [args addObject:options[@"params"][chunkNumber]];
+        [args addObject:[NSNumber numberWithInt:0]]	;
+        [args addObject:[NSNumber numberWithInt:1]];
+        [args addObject:[[NSDictionary alloc] init]];
+        [args addObject:options[@"progressId"]];
+        [args addObject:@"POST"];
+        [args addObject:options[@"timeout"]];
+        [args addObject:[NSNumber numberWithInt:chunkSize * chunkNumber]];
+        [args addObject:[NSNumber numberWithInt:chunkSize]];
+        
+        CDVInvokedUrlCommand* commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
+        dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
+        
+        UploadOperationCommandDelegate* delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate withProgressId:options[@"progressId"]];
+        [delegate setCompletionBlock:^(NSString* errorMsg){
+            errorMessage = errorMsg;
+            dispatch_semaphore_signal(sessionWaitSemaphore);
+        }];
+        [fileTransfer setCommandDelegate:delegate];
+        
+        [fileTransfer upload:commandOptions];
+        dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
+        
+        if (errorMessage != nil)
+            return;
+        
+        if (self.isCancelled)
+            return;
+    }
+	
+	if (uploadCompleteUrl != nil) {
         bool shouldRetry;
         do {
             shouldRetry = false;
