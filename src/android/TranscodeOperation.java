@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 
 class TranscodeOperation implements Runnable {
 	private final String TAG = VideoUploader.TAG;
@@ -49,57 +50,61 @@ class TranscodeOperation implements Runnable {
 
 	@Override
 	public void run() {
+		final CountDownLatch latch = new CountDownLatch(1);
+
+		final MediaTranscoder.Listener listener = new MediaTranscoder.Listener() {
+			@Override
+			public void onTranscodeProgress(double progress) {
+				LOG.d(TAG, "transcode running " + progress);
+
+				_callback.onTranscodeProgress(progress * 100);
+			}
+
+			@Override
+			public void onTranscodeCompleted() {
+				LOG.d(TAG, "transcode completed");
+
+				File outFile = new File(_dstPath);
+				if (!outFile.exists()) {
+					LOG.d(TAG, "outputFile doesn't exist!");
+					_callback.onTranscodeError("an error occurred during transcoding");
+					return;
+				}
+
+				_callback.onTranscodeComplete();
+				latch.countDown();
+			}
+
+			@Override
+			public void onTranscodeCanceled() {
+				LOG.d(TAG, "transcode canceled");
+
+				_callback.onTranscodeError("transcode canceled");
+				latch.countDown();
+			}
+
+			@Override
+			public void onTranscodeFailed(Exception exception) {
+				LOG.d(TAG, "transcode exception", exception);
+
+				_callback.onTranscodeError(exception.toString());
+				latch.countDown();
+			}
+		};
+
 		try {
-			FileInputStream fin = new FileInputStream(_src);
+			// MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+			// mmr.setDataSource(_srcPath);
 
-			MediaTranscoder.Listener listener = new MediaTranscoder.Listener() {
-				@Override
-				public void onTranscodeProgress(double progress) {
-					LOG.d(TAG, "transcode running " + progress);
-
-					_callback.onTranscodeProgress(progress * 100);
-				}
-
-				@Override
-				public void onTranscodeCompleted() {
-					LOG.d(TAG, "transcode completed");
-
-					File outFile = new File(_dstPath);
-
-					if (!outFile.exists()) {
-						LOG.d(TAG, "outputFile doesn't exist!");
-						_callback.onTranscodeError("an error occurred during transcoding");
-						return;
-					}
-
-					_callback.onTranscodeComplete();
-				}
-
-				@Override
-				public void onTranscodeCanceled() {
-			LOG.d(TAG, "transcode canceled");
-			_callback.onTranscodeError("transcode canceled");
-				}
-
-				@Override
-				public void onTranscodeFailed(Exception exception) {
-					LOG.d(TAG, "transcode exception", exception);
-
-					_callback.onTranscodeError(exception.toString());
-				}
-			};
-
-			MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-			mmr.setDataSource(_srcPath);
-
-			// String orientation;
-			// String mmrOrientation = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-			// LOG.d(TAG, "mmrOrientation: " + mmrOrientation); // 0, 90, 180, or 270
-
+			// String rotation = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
 			// float videoWidth = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
 			// float videoHeight = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
+			// LOG.d(TAG, "rotation: " + rotation); // 0, 90, 180, or 270
+
+			final FileInputStream fin = new FileInputStream(_src);
 			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
+			latch.await();
 		}
 		catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);
