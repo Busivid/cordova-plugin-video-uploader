@@ -36,6 +36,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -43,19 +44,23 @@ public class VideoUploader extends CordovaPlugin
 {
 	public static final String TAG = "VideoUploader";
 
-	private final ExecutorService _transcodeOperations;
-	private final ExecutorService _uploadOperations;
+	private ExecutorService _transcodeOperations;
+	private ExecutorService _uploadOperations;
 	private final Utils _utils;
 
 	public VideoUploader() {
-		_transcodeOperations = Executors.newFixedThreadPool(1);
-		_uploadOperations = Executors.newFixedThreadPool(1);
 		_utils = new Utils(cordova);
 	}
 
 	@Override
 	public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
 		LOG.d(TAG, "action: " + action);
+
+		if (_transcodeOperations == null || _transcodeOperations.isShutdown())
+			_transcodeOperations = Executors.newFixedThreadPool(1);
+
+		if (_uploadOperations == null || _uploadOperations.isShutdown())
+			_uploadOperations = Executors.newFixedThreadPool(1);
 
 		if (action.equals("abort")) {
 			_transcodeOperations.shutdownNow();
@@ -93,6 +98,8 @@ public class VideoUploader extends CordovaPlugin
 		try {
 			JSONArray fileOptions = args.getJSONArray(0);
 
+			final AtomicInteger remaining = new AtomicInteger(fileOptions.length());
+
 			for (int i=0; i < fileOptions.length(); i++) {
 				// Parse options
 				final JSONObject options = fileOptions.getJSONObject(i);
@@ -120,6 +127,8 @@ public class VideoUploader extends CordovaPlugin
 									@Override
 									public void run() {
 										reportUploadComplete(callbackContext, uploadCompleteUrl);
+										if (remaining.decrementAndGet() == 0)
+											callbackContext.success();
 									}
 								}
 						)

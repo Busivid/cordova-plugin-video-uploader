@@ -54,7 +54,6 @@ class UploadOperationCallback implements IUploadOperationCallback {
 		progressResult.setKeepCallback(true);
 
 		_callbackContext.sendPluginResult(progressResult);
-		_callbackContext.success();
 	}
 
 	public void onUploadProgress(double percentage) {
