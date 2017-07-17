@@ -7,6 +7,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
 
 class UploadOperation implements Runnable {
 	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = 100 * 1024 * 1024; // 100 MB
@@ -38,37 +39,39 @@ class UploadOperation implements Runnable {
 			final String callbackId = _uploadOperationCallback.getProgressId() + ".part" + (i + 1);
 			final long offset = chunkSize * i;
 
-			JSONArray args = new JSONArray();
-			args.put(_source);
-			args.put(_target);
-			args.put("file");								// fileKey
-			args.put(source.getName());						// fileName
-			args.put("video/mp4");							// mimeType
-			args.put(_options.optJSONObject("params"));		// params
-			args.put(false);								// trustEveryone
-			args.put(false);								// chunkedMode
-			args.put(_options.optJSONObject("headers"));	// headers
-			args.put(callbackId);							// objectId
-			args.put("POST");								// httpMethod
-			args.put(1800);									// timeout
-			args.put(offset);								// byte offset from start of file
-			args.put(chunkSize);							// bytes to upload
-
-			final Object lock = new Object();
+			final CountDownLatch latch = new CountDownLatch(1);
 			try {
+				JSONArray params = _options.optJSONArray("params");
+
+				JSONArray args = new JSONArray();
+				args.put(_source);
+				args.put(_target);
+				args.put("file");								// fileKey
+				args.put(source.getName());						// fileName
+				args.put("video/mp4");							// mimeType
+				args.put(params.opt(0));						// params
+				args.put(false);								// trustEveryone
+				args.put(false);								// chunkedMode
+				args.put(_options.optJSONObject("headers"));	// headers
+				args.put(callbackId);							// objectId
+				args.put("POST");								// httpMethod
+				args.put(1800);									// timeout
+				args.put(offset);								// byte offset from start of file
+				args.put(chunkSize);							// bytes to upload
+
 				FileTransferCallbackContext fileTransferCallbackContext = new FileTransferCallbackContext(
 					callbackId,
 					new IEventListener() {
 						// Completed
 						@Override
 						public void invoke() {
-							lock.notify();
+							latch.countDown();
 						}
 					}, new IStringEventListener() {
 						// Error
 						@Override
 						public void invoke(String value) {
-							lock.notify();
+							latch.countDown();
 						}
 					}, new ILongEventListener() {
 						// Progress
@@ -82,7 +85,7 @@ class UploadOperation implements Runnable {
 				);
 
 				_fileTransfer.execute("upload", args, fileTransferCallbackContext);
-				lock.wait();
+				latch.await();
 
 				String lastErrorMessage = fileTransferCallbackContext.getLastErrorMessage();
 				if (lastErrorMessage != null)
