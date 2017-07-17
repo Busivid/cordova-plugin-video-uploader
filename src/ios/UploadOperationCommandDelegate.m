@@ -5,9 +5,11 @@
 @synthesize settings;
 @synthesize urlTransformer;
 
-- (id)initWithCommandDelegateImpl:(CDVCommandDelegateImpl*)commandDelegateImpl withProgressId:(NSString*)pId {
+- (id)initWithCommandDelegateImpl:(CDVCommandDelegateImpl*)commandDelegateImpl progressId:(NSString*)pId offset:(NSNumber*)oBytes totalBytes:(NSNumber *)tBytes {
     commandDelegate = commandDelegateImpl;
     progressId = pId;
+    offset = oBytes;
+    totalBytes = tBytes;
     return [super init];
 }
 
@@ -24,10 +26,10 @@
 }
 
 - (void)sendPluginResult:(CDVPluginResult*)result callbackId:(NSString*)callbackId {
-    NSDictionary* messages = (NSDictionary*)result.message;
+    NSDictionary *messages = (NSDictionary*)result.message;
     
     if ([messages objectForKey:@"lengthComputable"] == nil) {
-        NSString* errorMessage;
+        NSString *errorMessage;
         if ([result.status intValue] != CDVCommandStatus_OK) {
             errorMessage = @"Error uploading file. Please check your internet connection and try again.";
         }
@@ -35,20 +37,19 @@
         completionBlock(errorMessage);
         return;
     }
-
-    NSNumber* totalBytesWritten = messages[@"loaded"];
-    NSNumber* totalBytesExpectedToWrite = messages[@"total"];
     
-    NSNumber* progress = [NSNumber numberWithFloat:floorf(100.0f * [totalBytesWritten floatValue] / [totalBytesExpectedToWrite floatValue])];
+    NSNumber *totalBytesWritten = [NSNumber numberWithFloat:([messages[@"loaded"] floatValue] + [offset floatValue])];
+    NSNumber *totalBytesExpectedToWrite = totalBytes;
+    
+    NSNumber *progress = [NSNumber numberWithFloat:floorf(100.0f * [totalBytesWritten floatValue] / [totalBytesExpectedToWrite floatValue])];
     
     if ([progress intValue] > [lastReportedProgress intValue]) {
-    	NSMutableDictionary* uploadProgress = [[NSMutableDictionary alloc] initWithCapacity:3];
+    	NSMutableDictionary *uploadProgress = [[NSMutableDictionary alloc] initWithCapacity:3];
     	[uploadProgress setObject:progress forKey:@"progress"];
     	[uploadProgress setObject:progressId forKey:@"progressId"];
     	[uploadProgress setObject:@"UPLOADING" forKey:@"type"];
         
-        
-        CDVPluginResult* newResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:uploadProgress];
+        CDVPluginResult *newResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:uploadProgress];
         [newResult setKeepCallbackAsBool:true];
 
         [commandDelegate sendPluginResult:newResult callbackId:callbackId];

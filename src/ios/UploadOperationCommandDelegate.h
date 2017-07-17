@@ -4,9 +4,11 @@
 @interface UploadOperationCommandDelegate:NSObject<CDVCommandDelegate> {
     CDVCommandDelegateImpl* commandDelegate;
     NSNumber* lastReportedProgress;
+    NSNumber* offset;
     NSString* progressId;
+    NSNumber* totalBytes;
 }
 @property (nonatomic, copy) void (^completionBlock)(NSString* errorMessage);
 
-- (id)initWithCommandDelegateImpl:(CDVCommandDelegateImpl*)commandDelegateImpl withProgressId:(NSString*)pId;
+- (id)initWithCommandDelegateImpl:(CDVCommandDelegateImpl*)commandDelegateImpl progressId:(NSString*)pId offset:(NSNumber*)offset totalBytes:(NSNumber*)totalBytes;
 @end

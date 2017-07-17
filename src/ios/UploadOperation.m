@@ -48,6 +48,9 @@
 
     int requiredChunkCount = ceil(fileSize / chunkSize);
     for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
+        
+        NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
+        
         //Order is important.
         NSMutableArray *args = [[NSMutableArray alloc] init];
         [args addObject:source.path];
@@ -62,13 +65,13 @@
         [args addObject:options[@"progressId"]];
         [args addObject:@"POST"];
         [args addObject:options[@"timeout"]];
-        [args addObject:[NSNumber numberWithInt:chunkSize * chunkNumber]];
+        [args addObject:offset];
         [args addObject:[NSNumber numberWithInt:chunkSize]];
         
         CDVInvokedUrlCommand* commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
         dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
         
-        UploadOperationCommandDelegate* delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate withProgressId:options[@"progressId"]];
+        UploadOperationCommandDelegate* delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate progressId:options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
         [delegate setCompletionBlock:^(NSString* errorMsg){
             errorMessage = errorMsg;
             dispatch_semaphore_signal(sessionWaitSemaphore);
