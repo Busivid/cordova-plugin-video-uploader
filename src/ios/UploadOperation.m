@@ -48,7 +48,6 @@
 
     int requiredChunkCount = ceil(fileSize / chunkSize);
     for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
-        
         NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
         
         //Order is important.
@@ -78,9 +77,12 @@
         }];
         [fileTransfer setCommandDelegate:delegate];
         
-        [fileTransfer upload:commandOptions];
-        dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
-        
+        // Auto-release pool required to let go of internal fileData object.
+        @autoreleasepool {
+        	[fileTransfer upload:commandOptions];
+        	dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
+        }
+            
         if (errorMessage != nil)
             return;
         
