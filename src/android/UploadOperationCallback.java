@@ -6,24 +6,20 @@ import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-interface IUploadOperationCallback {
-	String getProgressId();
-	void onUploadComplete();
-	void onUploadError(String message);
-	void onUploadProgress(double percentage);
-}
-
-class UploadOperationCallback implements IUploadOperationCallback {
+class UploadOperationCallback {
 	private final String TAG = VideoUploader.TAG;
 
 	private final CallbackContext _callbackContext;
+	private Boolean _isError;
 	private final String _progressId;
 	private final Runnable _uploadCompleteBlock;
+	private final Runnable _uploadErrorBlock;
 
-	public UploadOperationCallback(CallbackContext callbackContext, String progressId, Runnable uploadCompleteBlock) {
+	public UploadOperationCallback(CallbackContext callbackContext, String progressId, Runnable uploadCompleteBlock, Runnable uploadErrorBlock) {
 		_callbackContext = callbackContext;
 		_progressId = progressId;
 		_uploadCompleteBlock = uploadCompleteBlock;
+		_uploadErrorBlock = uploadErrorBlock;
 	}
 
 	public String getProgressId() {
@@ -33,13 +29,16 @@ class UploadOperationCallback implements IUploadOperationCallback {
 	public void onUploadError(String message) {
 		LOG.d(TAG, "onUploadError: " + message);
 
+		_isError = true;
 		_callbackContext.error(message);
+		_uploadErrorBlock.run();
 	}
 
 	public void onUploadComplete() {
-		LOG.d(TAG, "onUploadComplete");
+		if (_isError)
+			return;
 
-		_uploadCompleteBlock.run();
+		LOG.d(TAG, "onUploadComplete");
 
 		JSONObject jsonObj = new JSONObject();
 		try {
@@ -54,9 +53,14 @@ class UploadOperationCallback implements IUploadOperationCallback {
 		progressResult.setKeepCallback(true);
 
 		_callbackContext.sendPluginResult(progressResult);
+
+		_uploadCompleteBlock.run();
 	}
 
 	public void onUploadProgress(double percentage) {
+		if (_isError)
+			return;
+
 		LOG.d(TAG, "onUploadProgress: " + percentage);
 
 		JSONObject jsonObj = new JSONObject();

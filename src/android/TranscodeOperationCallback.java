@@ -10,22 +10,30 @@ class TranscodeOperationCallback {
 	private final String TAG = VideoUploader.TAG;
 
 	private final CallbackContext _callbackContext;
+	private Boolean _isError;
 	private final String _progressId;
 	private final Runnable _transcodeCompleteBlock;
+	private final Runnable _transcodeErrorBlock;
 
-	public TranscodeOperationCallback(CallbackContext callbackContext, String progressId, Runnable transcodeCompleteBlock) {
+	public TranscodeOperationCallback(CallbackContext callbackContext, String progressId, Runnable transcodeCompleteBlock, Runnable transcodeErrorBlock) {
 		_callbackContext = callbackContext;
 		_progressId = progressId;
 		_transcodeCompleteBlock = transcodeCompleteBlock;
+		_transcodeErrorBlock = transcodeErrorBlock;
 	}
 
 	public void onTranscodeError(String message) {
 		LOG.d(TAG, "onTranscodeError: " + message);
 
+		_isError = true;
 		_callbackContext.error(message);
+		_transcodeErrorBlock.run();
 	}
 
 	public void onTranscodeProgress(double percentage) {
+		if (_isError)
+			return;
+
 		LOG.d(TAG, "onTranscodeProgress: " + percentage);
 
 		JSONObject jsonObj = new JSONObject();
@@ -45,9 +53,10 @@ class TranscodeOperationCallback {
 	}
 
 	public void onTranscodeComplete() {
-		LOG.d(TAG, "onTranscodeComplete");
+		if (_isError)
+			return;
 
-		_transcodeCompleteBlock.run();
+		LOG.d(TAG, "onTranscodeComplete");
 
 		JSONObject jsonObj = new JSONObject();
 		try {
@@ -63,5 +72,7 @@ class TranscodeOperationCallback {
 		progressResult.setKeepCallback(true);
 
 		_callbackContext.sendPluginResult(progressResult);
+
+		_transcodeCompleteBlock.run();
 	}
 }

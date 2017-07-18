@@ -10,7 +10,7 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 
 class UploadOperation implements Runnable {
-	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = 100 * 1024 * 1024; // 100 MB
+	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = -1;
 	private static final String TAG = VideoUploader.TAG;
 
 	private final FileTransfer _fileTransfer;
@@ -33,10 +33,14 @@ class UploadOperation implements Runnable {
 		final long sourceLength = source.length();
 
 		final int chunkSize = _options.optInt("upload_chunk_size", DEFAULT_UPLOAD_CHUNK_SIZE);
-		final int chunks = (int) (sourceLength / chunkSize) + 1;
+		final int chunks = chunkSize < 1
+				? 1
+				: (int) (sourceLength / chunkSize) + 1;
 
 		for (int i = 0; i < chunks; i++) {
-			final String callbackId = _uploadOperationCallback.getProgressId() + ".part" + (i + 1);
+			final String callbackId = chunks > 1
+					? _uploadOperationCallback.getProgressId() + ".part" + (i + 1)
+					: _uploadOperationCallback.getProgressId();
 			final long offset = chunkSize * i;
 
 			final CountDownLatch latch = new CountDownLatch(1);
@@ -46,18 +50,18 @@ class UploadOperation implements Runnable {
 				JSONArray args = new JSONArray();
 				args.put(_source);
 				args.put(_target);
-				args.put("file");								// fileKey
-				args.put(source.getName());						// fileName
-				args.put("video/mp4");							// mimeType
-				args.put(params.opt(0));						// params
-				args.put(false);								// trustEveryone
-				args.put(false);								// chunkedMode
+				args.put("file");				// fileKey
+				args.put(source.getName());			// fileName
+				args.put("video/mp4");				// mimeType
+				args.put(params.opt(0));			// params
+				args.put(false);				// trustEveryone
+				args.put(false);				// chunkedMode
 				args.put(_options.optJSONObject("headers"));	// headers
-				args.put(callbackId);							// objectId
-				args.put("POST");								// httpMethod
-				args.put(1800);									// timeout
-				args.put(offset);								// byte offset from start of file
-				args.put(chunkSize);							// bytes to upload
+				args.put(callbackId);				// objectId
+				args.put("POST");				// httpMethod
+				args.put(1800);					// timeout
+				args.put(offset);				// offset of first byte to upload
+				args.put(chunkSize);				// number of bytes to upload
 
 				FileTransferCallbackContext fileTransferCallbackContext = new FileTransferCallbackContext(
 					callbackId,
@@ -94,7 +98,7 @@ class UploadOperation implements Runnable {
 				LOG.d(TAG, "upload exception ", e);
 
 				_uploadOperationCallback.onUploadError(e.toString());
-				break;
+				return;
 			}
 		}
 
