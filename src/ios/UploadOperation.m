@@ -40,16 +40,18 @@
     if (self.isCancelled) {
         return;
     }
-    
-    
-    int chunkSize = [options[@"chunkSize"] intValue];
+
+    int chunkSize = [options[@"chunkSize"] floatValue];
     unsigned long long fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:source.path error:nil] fileSize];
     NSString *fileName = [[source path] lastPathComponent];
 
-    int requiredChunkCount = ceil(fileSize / chunkSize);
+    int requiredChunkCount = ceil((float)fileSize / chunkSize);
     for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
-        
         NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
+        
+        NSDictionary *headers = options[@"headers"] == nil
+        	? [[NSDictionary alloc] init]
+        	: options[@"headers"];
         
         //Order is important.
         NSMutableArray *args = [[NSMutableArray alloc] init];
@@ -61,7 +63,7 @@
         [args addObject:options[@"params"][chunkNumber]];
         [args addObject:[NSNumber numberWithInt:0]]	;
         [args addObject:[NSNumber numberWithInt:1]];
-        [args addObject:[[NSDictionary alloc] init]];
+        [args addObject:headers];
         [args addObject:options[@"progressId"]];
         [args addObject:@"POST"];
         [args addObject:options[@"timeout"]];
@@ -78,9 +80,12 @@
         }];
         [fileTransfer setCommandDelegate:delegate];
         
-        [fileTransfer upload:commandOptions];
-        dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
-        
+        // Auto-release pool required to let go of internal fileData object.
+        @autoreleasepool {
+        	[fileTransfer upload:commandOptions];
+        	dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
+        }
+            
         if (errorMessage != nil)
             return;
         
@@ -113,6 +118,5 @@
             }
         } while (shouldRetry);
     }
-
 }
 @end
