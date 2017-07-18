@@ -41,11 +41,11 @@
         return;
     }
 
-    int chunkSize = [options[@"chunkSize"] floatValue];
+    int chunkSize = [options[@"chunkSize"] intValue];
     unsigned long long fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:source.path error:nil] fileSize];
     NSString *fileName = [[source path] lastPathComponent];
 
-    int requiredChunkCount = ceil((float)fileSize / chunkSize);
+    int requiredChunkCount = ceil(fileSize / (float)chunkSize);
     for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
         NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
         
