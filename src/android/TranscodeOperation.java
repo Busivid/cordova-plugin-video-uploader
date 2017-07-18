@@ -108,6 +108,7 @@ class TranscodeOperation implements Runnable {
 		}
 		catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);
+
 			_callback.onTranscodeError(e.toString());
 		}
 	}

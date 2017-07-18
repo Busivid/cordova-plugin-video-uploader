@@ -32,7 +32,10 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,11 +47,13 @@ public class VideoUploader extends CordovaPlugin
 {
 	public static final String TAG = "VideoUploader";
 
+	private final List<String> _completedUploads;
 	private ExecutorService _transcodeOperations;
 	private ExecutorService _uploadOperations;
 	private final Utils _utils;
 
 	public VideoUploader() {
+		_completedUploads = Collections.synchronizedList(new ArrayList<String>());
 		_utils = new Utils(cordova);
 	}
 
@@ -99,6 +104,7 @@ public class VideoUploader extends CordovaPlugin
 	}
 
 	private void compressAndUpload(JSONArray args, final CallbackContext callbackContext) {
+		_completedUploads.clear();
 		try {
 			JSONArray fileOptions = args.getJSONArray(0);
 
@@ -107,7 +113,7 @@ public class VideoUploader extends CordovaPlugin
 			for (int i=0; i < fileOptions.length(); i++) {
 				// Parse options
 				final JSONObject options = fileOptions.getJSONObject(i);
-				final String progressId = options.getString("progressId");
+				final String progressId = options.getString("progressId"); // mediaId
 
 				// Determine tmp file for transcoding
 				final String tmpPath = getTempDirectoryPath();
@@ -119,28 +125,41 @@ public class VideoUploader extends CordovaPlugin
 
 				final URL uploadCompleteUrl = new URL(options.getString("callbackUrl"));
 
+				final UploadOperationCallback uploadOperationCallback = new UploadOperationCallback(
+					callbackContext,
+					progressId,
+					new Runnable() {
+						@Override
+						public void run() {
+							reportUploadComplete(callbackContext, uploadCompleteUrl);
+							_completedUploads.add(progressId);
+							if (remaining.decrementAndGet() == 0)
+								callbackContext.success();
+						}
+					},
+					new UploadErrorBlock() {
+						@Override
+						public void run() {
+							abort();
+
+							JSONObject jsonObj = new JSONObject();
+							try {
+								jsonObj.put("completedTransfers", _completedUploads);
+								jsonObj.put("message", Message);
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							callbackContext.error(jsonObj);
+						}
+					}
+				);
+
 				// Prepare the upload operation
 				final UploadOperation uploadOperation = new UploadOperation(
 					fileTransfer,
 					subject,
 					options,
-					new UploadOperationCallback(
-						callbackContext,
-						progressId,
-						new Runnable() {
-							@Override
-							public void run() {
-								reportUploadComplete(callbackContext, uploadCompleteUrl);
-								if (remaining.decrementAndGet() == 0)
-									callbackContext.success();
-							}
-						}, new Runnable() {
-							@Override
-							public void run() {
-								abort();
-							}
-						}
-					)
+					uploadOperationCallback
 				);
 
 				// Prepare the transcode operation
