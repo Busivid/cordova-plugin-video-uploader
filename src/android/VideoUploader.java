@@ -63,8 +63,7 @@ public class VideoUploader extends CordovaPlugin
 			_uploadOperations = Executors.newFixedThreadPool(1);
 
 		if (action.equals("abort")) {
-			_transcodeOperations.shutdownNow();
-			_uploadOperations.shutdownNow();
+			abort();
 			callbackContext.success();
 			return true;
 		}
@@ -80,6 +79,11 @@ public class VideoUploader extends CordovaPlugin
 		}
 
 		throw new JSONException("action: " + action + " is not implemented.");
+	}
+
+	private void abort() {
+		_transcodeOperations.shutdownNow();
+		_uploadOperations.shutdownNow();
 	}
 
 	private void cleanup(final CallbackContext callbackContext) {
@@ -117,38 +121,48 @@ public class VideoUploader extends CordovaPlugin
 
 				// Prepare the upload operation
 				final UploadOperation uploadOperation = new UploadOperation(
-						fileTransfer,
-						subject,
-						options,
-						new UploadOperationCallback(
-								callbackContext,
-								progressId,
-								new Runnable() {
-									@Override
-									public void run() {
-										reportUploadComplete(callbackContext, uploadCompleteUrl);
-										if (remaining.decrementAndGet() == 0)
-											callbackContext.success();
-									}
-								}
-						)
+					fileTransfer,
+					subject,
+					options,
+					new UploadOperationCallback(
+						callbackContext,
+						progressId,
+						new Runnable() {
+							@Override
+							public void run() {
+								reportUploadComplete(callbackContext, uploadCompleteUrl);
+								if (remaining.decrementAndGet() == 0)
+									callbackContext.success();
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								abort();
+							}
+						}
+					)
 				);
 
 				// Prepare the transcode operation
 				final TranscodeOperation transcodeOperation = new TranscodeOperation(
-						options,
-						cordova,
-						_utils,
-						new TranscodeOperationCallback(
-								callbackContext,
-								progressId,
-								new Runnable() {
-									@Override
-									public void run() {
-										_uploadOperations.execute(uploadOperation);
-									}
-								}
-						)
+					options,
+					cordova,
+					_utils,
+					new TranscodeOperationCallback(
+						callbackContext,
+						progressId,
+						new Runnable() {
+							@Override
+							public void run() {
+								_uploadOperations.execute(uploadOperation);
+							}
+						}, new Runnable() {
+							@Override
+							public void run() {
+								abort();
+							}
+						}
+					)
 				);
 
 				// Enqueue transcode operation
