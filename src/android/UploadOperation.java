@@ -10,7 +10,7 @@ import java.io.File;
 import java.util.concurrent.CountDownLatch;
 
 class UploadOperation implements Runnable {
-	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = -1;
+	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = 100 * 1024 * 1024;
 	private static final String TAG = VideoUploader.TAG;
 
 	private final FileTransfer _fileTransfer;
@@ -32,7 +32,7 @@ class UploadOperation implements Runnable {
 		final File source = new File(_source);
 		final long sourceLength = source.length();
 
-		final int chunkSize = _options.optInt("upload_chunk_size", DEFAULT_UPLOAD_CHUNK_SIZE);
+		final int chunkSize = _options.optInt("chunkSize", DEFAULT_UPLOAD_CHUNK_SIZE);
 		final int chunks = chunkSize < 1
 				? 1
 				: (int) (sourceLength / chunkSize) + 1;
