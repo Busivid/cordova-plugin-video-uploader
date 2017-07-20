@@ -22,7 +22,7 @@ Performs the following steps
     function onVideoUploadProgress(type, progressId, percentage) {
       // percentage is (int) 1-100
       // progressId (see options.progressId)
-      // type is either 'TRANSCODING', 'UPLOADING', or 'UPLOADCOMPLETE'
+      // type is either 'TRANSCODE_COMPLETE', 'TRANSCODE_ERROR', 'TRANSCODING', 'UPLOAD_COMPLETE' or 'UPLOADING'
 
       console.log(progressId + ' ' + type + ' ' + percentage + '%');
     }
@@ -33,10 +33,11 @@ Performs the following steps
 
     var upload1 = {
       'callbackUrl': 'Url to hit after each file is uploaded',
+      'chunkSize': 'Size of each individual chunk',
       'fileName': 'Relative Remote path/to/filename.mp4',
       'filePath': 'Absolute Local file://URL',
       'maxSeconds': '(int) Maximum video length in seconds',
-      'params': 'HTTP Request variables sent to both the callbackUrl and uploadUrl',
+      'params': 'Array of HTTP Request variables sent to both the callbackUrl and uploadUrl',
       'progressId': 'Some unique string, used to facilitate multiple concurrent operations',
       'timeout': '(int) Timeout value for the upload request',
       'uploadUrl': 'Url to POST the transcoded file to'
