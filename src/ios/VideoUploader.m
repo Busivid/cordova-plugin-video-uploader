@@ -64,14 +64,15 @@
             // Get all required parameters from options.
             NSString *progressId = options[@"progressId"];
             NSURL *transcodingDst = [NSURL fileURLWithPath:transcodingDstFilePath];
-            NSURL *transcodingSrc = [NSURL fileURLWithPath:options[@"filePath"]];
+            NSURL *transcodingSrc = [NSURL URLWithString:options[@"filePath"]];
             NSURL *uploadCompleteUrl = [NSURL URLWithString:options[@"callbackUrl"]];
             NSURL *uploadUrl = [NSURL URLWithString:options[@"uploadUrl"]];
 
             // Initialise UploadOperation which is added to UploadQueue on completetionBlock of transcoding operation
-            UploadOperation *uploadOperation = [[UploadOperation alloc] initWithSource:transcodingDst target:uploadUrl options:options commandDelegate:self.commandDelegate cordovaCallbackId:latestCallbackId];
-            [uploadOperation setCommandDelegate:self.commandDelegate];
+            UploadOperation *uploadOperation = [[UploadOperation alloc] initWithOptions:options commandDelegate:self.commandDelegate cordovaCallbackId:latestCallbackId];
             [uploadOperation setUploadCompleteUrl:uploadCompleteUrl];
+            [uploadOperation setTarget:uploadUrl];
+            
             __weak UploadOperation *weakUpload = uploadOperation;
             [weakUpload setCompletionBlock:^{
                 if (weakUpload.errorMessage != nil) {
@@ -93,24 +94,29 @@
                     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:latestCallbackId];
                     [self removeBackgroundTask];
                 }
-
             }];
             
             // Initialise TranscodeOperation which is added immediately to queue.
             TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithFilePath:transcodingSrc dst:transcodingDst options:options commandDelegate:self.commandDelegate cordovaCallbackId:latestCallbackId];
             __weak TranscodeOperation* weakTranscodeOperation = transcodeOperation;
             [transcodeOperation setCompletionBlock:^{
-                if (weakTranscodeOperation.errorMessage != nil) {
-                    [self handleFatalError:weakTranscodeOperation.errorMessage withCallbackId:latestCallbackId];
-                    return;
-                }
-                
                 if (weakTranscodeOperation.isCancelled){
                     return;
                 }
-
-                // Notify cordova a single upload is complete
-                [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"TRANSCODE_COMPLETE"];
+                
+                if (weakTranscodeOperation.errorMessage != nil) {
+                    // Notify cordova a single transcode errored.
+                    [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"TRANSCODE_ERROR"];
+                
+                    // Transcoded failed, use original file in upload
+                    [uploadOperation setSource:transcodingSrc];
+                } else {
+                	// Notify cordova a single transcode is complete
+                	[self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"TRANSCODE_COMPLETE"];
+                    
+                    // Use transcoded file in upload
+                    [uploadOperation setSource:transcodingDst];
+                }
                 
                 // Add uploading to queue
                 [uploadQueue addOperation:uploadOperation];
@@ -229,7 +235,6 @@
             NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
             [self handleFatalError:errorMessage withCallbackId:latestCallbackId];
             [self removeBackgroundTask];
-
     	}];
     }
 }

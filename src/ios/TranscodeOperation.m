@@ -24,7 +24,7 @@
     cordovaCallbackId = callbackId;
     dstPath = dst;
     progressId = options[@"progressId"];
-    srcPath = [NSURL URLWithString:options[@"filePath"]];
+    srcPath = src;
     videoDuration = options[@"maxSeconds"];
 
     // Fields that can be used by android version, yet are not implemented yet in iOS.
