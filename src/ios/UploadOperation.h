@@ -12,11 +12,12 @@
     NSURL *target;
 }
 
-@property (nonatomic, weak) id <CDVCommandDelegate> commandDelegate;
 @property(retain) NSString *errorMessage;
-@property (copy) NSURL* uploadCompleteUrl;
+@property (retain) NSURL *source;
+@property (retain) NSURL *target;
+@property (copy) NSURL *uploadCompleteUrl;
 
 - (void)cancel;
-- (id)initWithSource:(NSURL*)source target:(NSURL*)target options:(NSDictionary *)opts commandDelegate:(id <CDVCommandDelegate>)cmdDelegate cordovaCallbackId:(NSString*)callbackId;
+- (id)initWithOptions:(NSDictionary *)opts commandDelegate:(id <CDVCommandDelegate>)cmdDelegate cordovaCallbackId:(NSString*)callbackId;
 - (void)main;
 @end

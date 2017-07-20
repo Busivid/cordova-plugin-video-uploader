@@ -2,8 +2,9 @@
 #import "UploadOperationCommandDelegate.h"
 
 @implementation UploadOperation
-@synthesize commandDelegate;
 @synthesize errorMessage;
+@synthesize source;
+@synthesize target;
 @synthesize uploadCompleteUrl;
 
 - (void) cancel {
@@ -20,24 +21,27 @@
     }
 }
 
-- (id)initWithSource:(NSURL*)src target:(NSURL*)uploadTarget options:(NSDictionary *)opts commandDelegate:(id <CDVCommandDelegate>)cmdDelegate cordovaCallbackId:(NSString*)callbackId {
+- (id)initWithOptions:(NSDictionary *)opts commandDelegate:(id <CDVCommandDelegate>)cmdDelegate cordovaCallbackId:(NSString*)callbackId {
     if (![super init])
         return nil;
     
     cordovaCallbackId = callbackId;
+    commandDelegate = cmdDelegate;
     options = opts;
     
     fileTransfer = [[CDVFileTransfer alloc] init];
     [fileTransfer pluginInitialize];
-    
-    source = src;
-    target = uploadTarget;
     
     return self;
 }
 
 - (void)main {
     if (self.isCancelled) {
+        return;
+    }
+    
+    if (source == nil || target == nil) {
+        self.errorMessage = @"Source and target must be defined.";
         return;
     }
 
