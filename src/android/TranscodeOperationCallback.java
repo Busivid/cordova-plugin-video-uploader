@@ -17,6 +17,7 @@ class TranscodeOperationCallback {
 
 	public TranscodeOperationCallback(CallbackContext callbackContext, String progressId, Runnable transcodeCompleteBlock, Runnable transcodeErrorBlock) {
 		_callbackContext = callbackContext;
+		_isError = false;
 		_progressId = progressId;
 		_transcodeCompleteBlock = transcodeCompleteBlock;
 		_transcodeErrorBlock = transcodeErrorBlock;

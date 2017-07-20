@@ -13,10 +13,11 @@ class UploadOperationCallback {
 	private Boolean _isError;
 	private final String _progressId;
 	private final Runnable _uploadCompleteBlock;
-	private final Runnable _uploadErrorBlock;
+	private final UploadErrorBlock _uploadErrorBlock;
 
-	public UploadOperationCallback(CallbackContext callbackContext, String progressId, Runnable uploadCompleteBlock, Runnable uploadErrorBlock) {
+	public UploadOperationCallback(CallbackContext callbackContext, String progressId, Runnable uploadCompleteBlock, UploadErrorBlock uploadErrorBlock) {
 		_callbackContext = callbackContext;
+		_isError = false;
 		_progressId = progressId;
 		_uploadCompleteBlock = uploadCompleteBlock;
 		_uploadErrorBlock = uploadErrorBlock;
@@ -30,7 +31,7 @@ class UploadOperationCallback {
 		LOG.d(TAG, "onUploadError: " + message);
 
 		_isError = true;
-		_callbackContext.error(message);
+		_uploadErrorBlock.Message = message;
 		_uploadErrorBlock.run();
 	}
 
@@ -53,7 +54,6 @@ class UploadOperationCallback {
 		progressResult.setKeepCallback(true);
 
 		_callbackContext.sendPluginResult(progressResult);
-
 		_uploadCompleteBlock.run();
 	}
 
