@@ -44,6 +44,10 @@
         return;
     }
     
+    if([[NSFileManager defaultManager] fileExistsAtPath:dstPath.path]) {
+        return;
+    }
+    
     AVURLAsset *avAsset = [AVURLAsset URLAssetWithURL:srcPath options:nil];
 
     exportSession = [[AVAssetExportSession alloc]initWithAsset:avAsset presetName: AVAssetExportPreset1280x720];
@@ -88,6 +92,10 @@
     // We need to ensure a status progress of 100 was sent at some point.
     if ([exportSession status] == AVAssetExportSessionStatusCompleted) {
            [self reportProgress:[NSNumber numberWithInt:100]];
+    }
+    
+    if ([exportSession status] != AVAssetExportSessionStatusCompleted) {
+        [[NSFileManager defaultManager] removeItemAtPath:dstPath.path error:nil];
     }
 
     switch ([exportSession status]) {

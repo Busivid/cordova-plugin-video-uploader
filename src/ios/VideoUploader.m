@@ -53,16 +53,16 @@
     [self.commandDelegate runInBackground:^{
         NSArray *fileOptions = [cmd.arguments objectAtIndex:0];
         for(NSDictionary *options in fileOptions) {
+            NSString *progressId = options[@"progressId"];
             
             // Find a temporary path for transcoding.
-            NSString *transcodingDstFilePath = [self getTemporaryVideoFilePath];
+            NSString *transcodingDstFilePath = [self getTempTranscodingFile:progressId];
             if (transcodingDstFilePath == nil) {
                 [self handleFatalError:@"Unable to create output folder for compression." withCallbackId:latestCallbackId];
                 return;
             }
             
             // Get all required parameters from options.
-            NSString *progressId = options[@"progressId"];
             NSURL *transcodingDst = [NSURL fileURLWithPath:transcodingDstFilePath];
             NSURL *transcodingSrc = [NSURL URLWithString:options[@"filePath"]];
             NSURL *uploadCompleteUrl = [NSURL URLWithString:options[@"callbackUrl"]];
@@ -136,16 +136,6 @@
 /*
  * Helper functions
  */
-
-- (NSString *)getUUID
-{
-    CFUUIDRef newUniqueId = CFUUIDCreate(kCFAllocatorDefault);
-    NSString * uuidString = (__bridge_transfer NSString*)CFUUIDCreateString(kCFAllocatorDefault, newUniqueId);
-    CFRelease(newUniqueId);
-
-    return uuidString;
-}
-
 - (void) handleFatalError:(NSString*)message withCallbackId:(NSString*)callbackId {
     NSLog(@"[VideoUploader]: handleFatalError called");
 
@@ -172,7 +162,7 @@
     [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:results] callbackId:callbackId];
 }
 
-- (NSString*) getTemporaryVideoFilePath {
+- (NSString*)getTempTranscodingFile:(NSString*)progressId {
     // Ensure the cache directory exists.
     NSFileManager *fileMgr = [NSFileManager defaultManager];
     NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -181,7 +171,7 @@
         return nil;
     }
     // Get a unique compressed file name.
-    NSString *videoOutput = [videoDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [NSString stringWithFormat:@"%@_compressed", [self getUUID]], @"mp4"]];
+    NSString *videoOutput = [videoDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [NSString stringWithFormat:@"%@_compressed", progressId], @"mp4"]];
     return videoOutput;
 }
 
