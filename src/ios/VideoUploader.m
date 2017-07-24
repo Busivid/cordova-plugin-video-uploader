@@ -113,9 +113,19 @@
                 } else {
                 	// Notify cordova a single transcode is complete
                 	[self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"TRANSCODE_COMPLETE"];
+
+                    NSFileManager *fileMgr = [NSFileManager defaultManager];
+                    unsigned long long transcodingDstFileSize = [[fileMgr attributesOfItemAtPath:transcodingDst.path error:nil] fileSize];
+
+                    unsigned long long transcodingSrcFileSize = [[fileMgr attributesOfItemAtPath:transcodingSrc.path error:nil] fileSize];
+                    
+                    // Upload the smaller file size
+                    NSURL *fileToUpload = transcodingSrcFileSize >= transcodingDstFileSize
+                    	? transcodingDst
+                    	: transcodingSrc;
                     
                     // Use transcoded file in upload
-                    [uploadOperation setSource:transcodingDst];
+                    [uploadOperation setSource:fileToUpload];
                 }
                 
                 // Add uploading to queue
