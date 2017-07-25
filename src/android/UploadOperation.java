@@ -53,7 +53,7 @@ class UploadOperation implements Runnable {
 				args.put("file");				// fileKey
 				args.put(source.getName());			// fileName
 				args.put("video/mp4");				// mimeType
-				args.put(params.opt(0));			// params
+				args.put(params.opt(i));			// params
 				args.put(false);				// trustEveryone
 				args.put(false);				// chunkedMode
 				args.put(_options.optJSONObject("headers"));	// headers
