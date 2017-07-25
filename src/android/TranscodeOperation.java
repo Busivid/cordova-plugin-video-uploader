@@ -17,6 +17,7 @@ class TranscodeOperation implements Runnable {
 
 	private final TranscodeOperationCallback _callback;
 	public final CordovaInterface _cordova;
+	private final File _dst;
 	private final String _dstPath;
 	private final int _fps;
 	private final int _height;
@@ -40,6 +41,8 @@ class TranscodeOperation implements Runnable {
 		_videoBitrate = options.optInt("videoBitrate", 5 * 1000 * 1000);
 		_videoDuration = options.optLong("maxSeconds", 900) * 1000 * 1000;
 		_width = options.optInt("width", 1280);
+
+		_dst = new File(_dstPath);
 
 		if (!_src.exists()) {
 			LOG.d(TAG, "input file does not exist");
@@ -65,8 +68,7 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeCompleted() {
 				LOG.d(TAG, "transcode completed");
 
-				File outFile = new File(_dstPath);
-				if (!outFile.exists()) {
+				if (!_dst.exists()) {
 					LOG.d(TAG, "outputFile doesn't exist!");
 					_callback.onTranscodeError("an error occurred during transcoding");
 					return;
@@ -80,6 +82,7 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeCanceled() {
 				LOG.d(TAG, "transcode canceled");
 
+				_dst.delete();
 				_callback.onTranscodeError("transcode canceled");
 				latch.countDown();
 			}
@@ -88,12 +91,18 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeFailed(Exception exception) {
 				LOG.d(TAG, "transcode exception", exception);
 
+				_dst.delete();
 				_callback.onTranscodeError(exception.toString());
 				latch.countDown();
 			}
 		};
 
 		try {
+			if (_dst.exists()) {
+				listener.onTranscodeCompleted();
+				return;
+			}
+
 			// MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 			// mmr.setDataSource(_srcPath);
 
@@ -111,6 +120,7 @@ class TranscodeOperation implements Runnable {
 		catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);
 
+			_dst.delete();
 			_callback.onTranscodeError(e.toString());
 		}
 	}

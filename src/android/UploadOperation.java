@@ -109,7 +109,7 @@ class UploadOperation implements Runnable {
 			} catch (Throwable e) {
 				LOG.d(TAG, "upload exception ", e);
 
-				_uploadOperationCallback.onUploadError(e.toString());
+				_uploadOperationCallback.onUploadError(e.getMessage());
 				return;
 			}
 		}
