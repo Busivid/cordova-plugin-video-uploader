@@ -1,11 +1,12 @@
 package com.busivid.cordova.videouploader;
 
-import android.media.MediaMetadataRetriever;
 import net.ypresto.androidtranscoder.MediaTranscoder;
+
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.LOG;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -105,6 +106,7 @@ class TranscodeOperation implements Runnable {
 			final FileInputStream fin = new FileInputStream(_src);
 			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
 			latch.await();
+			fin.close();
 		}
 		catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);

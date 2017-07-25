@@ -31,12 +31,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -116,6 +113,8 @@ public class VideoUploader extends CordovaPlugin
 				final JSONObject options = fileOptions.getJSONObject(i);
 				final String progressId = options.getString("progressId"); // mediaId
 
+				final File original = _utils.resolveLocalFileSystemURI(options.getString("filePath"));
+
 				// Determine tmp file for transcoding
 				final String tmpPath = getTempDirectoryPath();
 				final String subject = tmpPath + "/" + UUID.randomUUID() + ".mp4";
@@ -174,6 +173,20 @@ public class VideoUploader extends CordovaPlugin
 						new Runnable() {
 							@Override
 							public void run() {
+								// If re-encoded file is larger, use the original instead.
+								File encoded = new File(subject);
+								if (encoded.length() > original.length()) {
+									LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
+									try {
+										options.put("filePath", subject);
+										encoded.delete();
+									} catch (JSONException e) {
+										e.printStackTrace();
+									} catch (SecurityException e) {
+										e.printStackTrace();
+									}
+								}
+
 								_uploadOperations.execute(uploadOperation);
 							}
 						}, new Runnable() {
