@@ -57,6 +57,16 @@
         	? [[NSDictionary alloc] init]
         	: options[@"headers"];
         
+        NSDictionary *params = options[@"params"] == nil || options[@"params"][chunkNumber] == nil
+        	? [[NSDictionary alloc] init]
+        	: options[@"params"][chunkNumber];
+        
+        
+        NSURL *expectedFileUrl = [target URLByAppendingPathComponent:params[@"key"]];
+        bool isFileAlreadyUploaded = [self doesFileExistsAtUrl:expectedFileUrl];
+        if(isFileAlreadyUploaded)
+	        continue;
+        
         //Order is important.
         NSMutableArray *args = [[NSMutableArray alloc] init];
         [args addObject:source.path];
@@ -64,7 +74,7 @@
         [args addObject:@"file"];
         [args addObject:fileName];
         [args addObject:@"video/mp4"];
-        [args addObject:options[@"params"][chunkNumber]];
+        [args addObject:params];
         [args addObject:[NSNumber numberWithInt:0]]	;
         [args addObject:[NSNumber numberWithInt:1]];
         [args addObject:headers];
@@ -122,5 +132,17 @@
             }
         } while (shouldRetry);
     }
+}
+
+- (bool)doesFileExistsAtUrl:(NSURL*) url {
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    [request setHTTPMethod:@"HEAD"];
+    [request setURL:url];
+    
+    NSError *error = nil;
+    NSHTTPURLResponse *callbackResponseCode = nil;
+    
+    NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
+    return [callbackResponseCode statusCode] == 200;
 }
 @end
