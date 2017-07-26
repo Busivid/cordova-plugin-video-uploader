@@ -21,6 +21,7 @@ class TranscodeOperation implements Runnable {
 	private final String _dstPath;
 	private final int _fps;
 	private final int _height;
+	private boolean _isComplete;
 	private final File _src;
 	private final String _srcPath;
 	private final int _videoBitrate;
@@ -68,6 +69,7 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeCompleted() {
 				LOG.d(TAG, "transcode completed");
 
+				_isComplete = true;
 				if (!_dst.exists()) {
 					LOG.d(TAG, "outputFile doesn't exist!");
 					_callback.onTranscodeError("an error occurred during transcoding");
@@ -82,7 +84,6 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeCanceled() {
 				LOG.d(TAG, "transcode canceled");
 
-				_dst.delete();
 				_callback.onTranscodeError("transcode canceled");
 				latch.countDown();
 			}
@@ -91,18 +92,12 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeFailed(Exception exception) {
 				LOG.d(TAG, "transcode exception", exception);
 
-				_dst.delete();
 				_callback.onTranscodeError(exception.toString());
 				latch.countDown();
 			}
 		};
 
 		try {
-			if (_dst.exists()) {
-				listener.onTranscodeCompleted();
-				return;
-			}
-
 			// MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 			// mmr.setDataSource(_srcPath);
 
@@ -113,6 +108,7 @@ class TranscodeOperation implements Runnable {
 			// LOG.d(TAG, "rotation: " + rotation); // 0, 90, 180, or 270
 
 			final FileInputStream fin = new FileInputStream(_src);
+			_isComplete = false;
 			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
 			latch.await();
 			fin.close();
@@ -120,8 +116,12 @@ class TranscodeOperation implements Runnable {
 		catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);
 
-			_dst.delete();
 			_callback.onTranscodeError(e.toString());
+		} finally {
+			if (!_isComplete) {
+				MediaTranscoder.getInstance().abort();
+				_dst.delete();
+			}
 		}
 	}
 }
