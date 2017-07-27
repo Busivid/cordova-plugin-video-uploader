@@ -34,7 +34,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -117,7 +116,7 @@ public class VideoUploader extends CordovaPlugin
 
 				// Determine tmp file for transcoding
 				final String tmpPath = getTempDirectoryPath();
-				final String subject = tmpPath + "/" + UUID.randomUUID() + ".mp4";
+				final String subject = tmpPath + "/" + progressId + "_compressed.mp4";
 				options.put("dstPath", subject);
 
 				final FileTransfer fileTransfer = new FileTransfer();

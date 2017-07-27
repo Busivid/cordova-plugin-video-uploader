@@ -7,6 +7,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 
 class UploadOperation implements Runnable {
@@ -46,22 +48,32 @@ class UploadOperation implements Runnable {
 			final CountDownLatch latch = new CountDownLatch(1);
 			try {
 				JSONArray params = _options.optJSONArray("params");
+				JSONObject options = params.optJSONObject(i);
+
+				// Determine if this chunk has already been uploaded
+				URL url = new URL(_target + "/" + options.get("key"));
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				connection.setRequestMethod("HEAD");
+				connection.setUseCaches(false);
+				int responseCode = connection.getResponseCode();
+				if (responseCode == 200)
+					continue;
 
 				JSONArray args = new JSONArray();
 				args.put(_source);
 				args.put(_target);
-				args.put("file");				// fileKey
-				args.put(source.getName());			// fileName
-				args.put("video/mp4");				// mimeType
-				args.put(params.opt(i));			// params
-				args.put(false);				// trustEveryone
-				args.put(false);				// chunkedMode
+				args.put("file");								// fileKey
+				args.put(source.getName());						// fileName
+				args.put("video/mp4");							// mimeType
+				args.put(options);								// params
+				args.put(false);								// trustEveryone
+				args.put(false);								// chunkedMode
 				args.put(_options.optJSONObject("headers"));	// headers
-				args.put(callbackId);				// objectId
-				args.put("POST");				// httpMethod
-				args.put(1800);					// timeout
-				args.put(offset);				// offset of first byte to upload
-				args.put(chunkSize);				// number of bytes to upload
+				args.put(callbackId);							// objectId
+				args.put("POST");								// httpMethod
+				args.put(1800);									// timeout
+				args.put(offset);								// offset of first byte to upload
+				args.put(chunkSize);							// number of bytes to upload
 
 				FileTransferCallbackContext fileTransferCallbackContext = new FileTransferCallbackContext(
 					callbackId,
@@ -97,7 +109,7 @@ class UploadOperation implements Runnable {
 			} catch (Throwable e) {
 				LOG.d(TAG, "upload exception ", e);
 
-				_uploadOperationCallback.onUploadError(e.toString());
+				_uploadOperationCallback.onUploadError(e.getMessage());
 				return;
 			}
 		}

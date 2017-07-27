@@ -1,12 +1,10 @@
 package com.busivid.cordova.videouploader;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.LOG;
 import org.apache.cordova.PluginResult;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.concurrent.Callable;
-import java.util.concurrent.RunnableFuture;
 
 class FileTransferCallbackContext extends CallbackContext {
 	private static final String TAG = VideoUploader.TAG;
@@ -34,7 +32,8 @@ class FileTransferCallbackContext extends CallbackContext {
 
 		// Catch FileTransferProgress events -> mutate into VideoUploader Progress Event
 		if (status != PluginResult.Status.OK.ordinal()) {
-			_lastErrorMessage = pluginResult.getMessage();
+			LOG.d(TAG, pluginResult.getMessage());
+			_lastErrorMessage = "Error uploading file. Please check your internet connection and try again.";
 			_errorEvent.invoke(_lastErrorMessage);
 			return;
 		}

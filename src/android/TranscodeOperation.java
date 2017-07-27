@@ -17,9 +17,11 @@ class TranscodeOperation implements Runnable {
 
 	private final TranscodeOperationCallback _callback;
 	public final CordovaInterface _cordova;
+	private final File _dst;
 	private final String _dstPath;
 	private final int _fps;
 	private final int _height;
+	private boolean _isComplete;
 	private final File _src;
 	private final String _srcPath;
 	private final int _videoBitrate;
@@ -40,6 +42,8 @@ class TranscodeOperation implements Runnable {
 		_videoBitrate = options.optInt("videoBitrate", 5 * 1000 * 1000);
 		_videoDuration = options.optLong("maxSeconds", 900) * 1000 * 1000;
 		_width = options.optInt("width", 1280);
+
+		_dst = new File(_dstPath);
 
 		if (!_src.exists()) {
 			LOG.d(TAG, "input file does not exist");
@@ -65,8 +69,8 @@ class TranscodeOperation implements Runnable {
 			public void onTranscodeCompleted() {
 				LOG.d(TAG, "transcode completed");
 
-				File outFile = new File(_dstPath);
-				if (!outFile.exists()) {
+				_isComplete = true;
+				if (!_dst.exists()) {
 					LOG.d(TAG, "outputFile doesn't exist!");
 					_callback.onTranscodeError("an error occurred during transcoding");
 					return;
@@ -104,6 +108,7 @@ class TranscodeOperation implements Runnable {
 			// LOG.d(TAG, "rotation: " + rotation); // 0, 90, 180, or 270
 
 			final FileInputStream fin = new FileInputStream(_src);
+			_isComplete = false;
 			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
 			latch.await();
 			fin.close();
@@ -112,6 +117,11 @@ class TranscodeOperation implements Runnable {
 			LOG.d(TAG, "transcode exception ", e);
 
 			_callback.onTranscodeError(e.toString());
+		} finally {
+			if (!_isComplete) {
+				MediaTranscoder.getInstance().abort();
+				_dst.delete();
+			}
 		}
 	}
 }
