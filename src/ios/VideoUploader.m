@@ -102,7 +102,7 @@
             [transcodeOperation setCompletionBlock:^{
                 // Mutex lock to fix race conditions.
                 // If two task have already been transcoded, therefore return instantly, the UploadOperations can be added out of order and looks confusing on the UI.
-                @synchronized (uploadQueue) {
+                @synchronized (transcodeCallbackLock) {
                     if (weakTranscodeOperation.isCancelled){
                         return;
                     }

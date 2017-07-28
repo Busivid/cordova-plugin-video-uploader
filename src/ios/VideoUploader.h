@@ -11,6 +11,8 @@
     NSString *latestCallbackId;
     NSOperationQueue *transcodingQueue;
     NSOperationQueue *uploadQueue;
+    
+    NSObject *transcodeCallbackLock;
 }
 
 @property (copy) NSMutableArray *completedTransfers;
