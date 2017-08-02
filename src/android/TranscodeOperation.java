@@ -107,6 +107,12 @@ class TranscodeOperation implements Runnable {
 
 			// LOG.d(TAG, "rotation: " + rotation); // 0, 90, 180, or 270
 
+			final Boolean transcodedFileAlreadyExists = new File(_dstPath).exists();
+			if (transcodedFileAlreadyExists) {
+				listener.onTranscodeCompleted();
+				return;
+			}
+
 			final FileInputStream fin = new FileInputStream(_src);
 			_isComplete = false;
 			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
