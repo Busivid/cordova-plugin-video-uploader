@@ -141,9 +141,14 @@ public class VideoUploader extends CordovaPlugin
 						public void run() {
 							abort();
 
+							JSONArray completedUploadsJson = new JSONArray();
+							for(int i = 0; i < _completedUploads.size(); i++) {
+								completedUploadsJson.put(_completedUploads.get(i));
+							}
+
 							JSONObject jsonObj = new JSONObject();
 							try {
-								jsonObj.put("completedTransfers", _completedUploads);
+								jsonObj.put("completedTransfers", completedUploadsJson);
 								jsonObj.put("message", Message);
 							} catch (JSONException e) {
 								e.printStackTrace();
