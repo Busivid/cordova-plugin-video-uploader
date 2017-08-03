@@ -34,7 +34,6 @@ class TranscodeOperationCallback {
 			jsonObj.put("progress", 100);
 			jsonObj.put("progressId", _progressId);
 			jsonObj.put("type", "TRANSCODE_COMPLETE");
-
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -66,7 +65,6 @@ class TranscodeOperationCallback {
 			jsonObj.put("progress", percentage);
 			jsonObj.put("progressId", _progressId);
 			jsonObj.put("type", "TRANSCODING");
-
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
