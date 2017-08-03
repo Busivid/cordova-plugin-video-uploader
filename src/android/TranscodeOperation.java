@@ -112,11 +112,11 @@ class TranscodeOperation implements Runnable {
 				return;
 			}
 
-			final FileInputStream fin = new FileInputStream(_src);
+			final FileInputStream inputStream = new FileInputStream(_src);
 			_isComplete = false;
-			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
+			MediaTranscoder.getInstance().transcodeVideo(inputStream.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
 			latch.await();
-			fin.close();
+			inputStream.close();
 		} catch (InterruptedException e) {
 			// Do nothing/
 		} catch (Throwable e) {
