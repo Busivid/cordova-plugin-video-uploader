@@ -107,8 +107,7 @@ class TranscodeOperation implements Runnable {
 
 			// LOG.d(TAG, "rotation: " + rotation); // 0, 90, 180, or 270
 
-			final Boolean transcodedFileAlreadyExists = new File(_dstPath).exists();
-			if (transcodedFileAlreadyExists) {
+			if (_dst.exists()) {
 				listener.onTranscodeCompleted();
 				return;
 			}
@@ -119,10 +118,13 @@ class TranscodeOperation implements Runnable {
 			latch.await();
 			fin.close();
 		}
+		catch (InterruptedException e) {
+			// Do nothing/
+		}
 		catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);
 
-			_callback.onTranscodeError(e.toString());
+			_callback.onTranscodeError(e.getMessage());
 		} finally {
 			if (!_isComplete) {
 				MediaTranscoder.getInstance().abort();

@@ -141,14 +141,9 @@ public class VideoUploader extends CordovaPlugin
 						public void run() {
 							abort();
 
-							JSONArray completedUploadsJson = new JSONArray();
-							for(int i = 0; i < _completedUploads.size(); i++) {
-								completedUploadsJson.put(_completedUploads.get(i));
-							}
-
 							JSONObject jsonObj = new JSONObject();
 							try {
-								jsonObj.put("completedTransfers", completedUploadsJson);
+								jsonObj.put("completedTransfers", new JSONArray(_completedUploads));
 								jsonObj.put("message", Message);
 							} catch (JSONException e) {
 								e.printStackTrace();
@@ -207,7 +202,7 @@ public class VideoUploader extends CordovaPlugin
 			}
 		} catch (Throwable e) {
 			LOG.d(TAG, "exception ", e);
-			callbackContext.error(e.toString());
+			callbackContext.error(e.getMessage());
 		}
 	}
 
@@ -218,7 +213,7 @@ public class VideoUploader extends CordovaPlugin
 			int responseCode = -1;
 			try {
 				LOG.d(TAG, "HTTP GET: ", uploadCompleteUrl.toString());
-				connection = (HttpURLConnection) uploadCompleteUrl.openConnection();
+				connection = (HttpURLConnection)uploadCompleteUrl.openConnection();
 				connection.setConnectTimeout(10000);
 				connection.setReadTimeout(10000);
 
