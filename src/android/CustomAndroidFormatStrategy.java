@@ -36,35 +36,32 @@ public class CustomAndroidFormatStrategy implements MediaFormatStrategy {
 	}
 
 	public MediaFormat createVideoOutputFormat(MediaFormat inputFormat) {
-		int inWidth = inputFormat.getInteger(MediaFormat.KEY_WIDTH);
-		int inHeight = inputFormat.getInteger(MediaFormat.KEY_HEIGHT);
-		int inLonger, inShorter, outWidth, outHeight, outLonger;
-		double aspectRatio;
+		final int inWidth = inputFormat.getInteger(MediaFormat.KEY_WIDTH);
+		final int inHeight = inputFormat.getInteger(MediaFormat.KEY_HEIGHT);
 
-		if (this.width >= this.height) {
-			outLonger = this.width;
-		} else {
-			outLonger = this.height;
-		}
+		final int outLonger = this.width >= this.height
+			? this.width
+			: this.height;
 
+		final int inLonger;
+		final int inShorter;
 		if (inWidth >= inHeight) {
 			inLonger = inWidth;
 			inShorter = inHeight;
-
 		} else {
 			inLonger = inHeight;
 			inShorter = inWidth;
-
 		}
 
+		final int outWidth;
+		final int outHeight;
 		if (inLonger > outLonger) {
+			final double aspectRatio = (double)inLonger / (double)inShorter;
+
 			if (inWidth >= inHeight) {
-				aspectRatio = (double)inLonger / (double)inShorter;
 				outWidth = outLonger;
 				outHeight = Double.valueOf(outWidth / aspectRatio).intValue();
-
 			} else {
-				aspectRatio = (double)inLonger / (double)inShorter;
 				outHeight = outLonger;
 				outWidth = Double.valueOf(outHeight / aspectRatio).intValue();
 			}
@@ -81,6 +78,5 @@ public class CustomAndroidFormatStrategy implements MediaFormatStrategy {
 		format.setLong(MediaFormat.KEY_DURATION, 5 * 1000 * 1000); // Microseconds μs
 
 		return format;
-
 	}
 }
