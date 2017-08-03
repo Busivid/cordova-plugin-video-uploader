@@ -11,12 +11,8 @@ class FileTransferCallbackContext extends CallbackContext {
 
 	private final IEventListener _completeEvent;
 	private final IStringEventListener _errorEvent;
-	private final ILongEventListener _progressEvent;
 	private String _lastErrorMessage;
-
-	public String getLastErrorMessage() {
-		return _lastErrorMessage;
-	}
+	private final ILongEventListener _progressEvent;
 
 	FileTransferCallbackContext(String callbackId, IEventListener completeEvent, IStringEventListener errorEvent, ILongEventListener progressEvent) {
 		super(callbackId, null);
@@ -24,6 +20,10 @@ class FileTransferCallbackContext extends CallbackContext {
 		_completeEvent = completeEvent;
 		_errorEvent = errorEvent;
 		_progressEvent = progressEvent;
+	}
+
+	public String getLastErrorMessage() {
+		return _lastErrorMessage;
 	}
 
 	@Override

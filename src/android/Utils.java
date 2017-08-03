@@ -28,13 +28,10 @@ public class Utils {
 	public static String getDataColumn(Context context, Uri uri, String selection, String[] selectionArgs) {
 		Cursor cursor = null;
 		final String column = "_data";
-		final String[] projection = {
-				column
-		};
+		final String[] projection = {column};
 
 		try {
-			cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-					null);
+			cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs, null);
 			if (cursor != null && cursor.moveToFirst()) {
 				final int column_index = cursor.getColumnIndexOrThrow(column);
 				return cursor.getString(column_index);
@@ -68,8 +65,7 @@ public class Utils {
 			else if (isDownloadsDocument(uri)) {
 
 				final String id = DocumentsContract.getDocumentId(uri);
-				final Uri contentUri = ContentUris.withAppendedId(
-						Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+				final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
 
 				return getDataColumn(context, contentUri, null, null);
 			}
@@ -89,9 +85,7 @@ public class Utils {
 				}
 
 				final String selection = "_id=?";
-				final String[] selectionArgs = new String[] {
-						split[1]
-				};
+				final String[] selectionArgs = new String[]{split[1]};
 
 				return getDataColumn(context, contentUri, selection, selectionArgs);
 			}
@@ -108,12 +102,12 @@ public class Utils {
 		return null;
 	}
 
-	public static boolean isExternalStorageDocument(Uri uri) {
-		return "com.android.externalstorage.documents".equals(uri.getAuthority());
-	}
-
 	public static boolean isDownloadsDocument(Uri uri) {
 		return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+	}
+
+	public static boolean isExternalStorageDocument(Uri uri) {
+		return "com.android.externalstorage.documents".equals(uri.getAuthority());
 	}
 
 	public static boolean isMediaDocument(Uri uri) {

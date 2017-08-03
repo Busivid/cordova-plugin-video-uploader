@@ -36,13 +36,13 @@ class UploadOperation implements Runnable {
 
 		final int chunkSize = _options.optInt("chunkSize", DEFAULT_UPLOAD_CHUNK_SIZE);
 		final int chunks = chunkSize < 1
-				? 1
-				: (int)(sourceLength / chunkSize) + 1;
+			? 1
+			: (int)(sourceLength / chunkSize) + 1;
 
 		for (int i = 0; i < chunks; i++) {
 			final String callbackId = chunks > 1
-					? _uploadOperationCallback.getProgressId() + ".part" + (i + 1)
-					: _uploadOperationCallback.getProgressId();
+				? _uploadOperationCallback.getProgressId() + ".part" + (i + 1)
+				: _uploadOperationCallback.getProgressId();
 			final long offset = chunkSize * i;
 
 			final CountDownLatch latch = new CountDownLatch(1);
@@ -52,7 +52,7 @@ class UploadOperation implements Runnable {
 
 				// Determine if this chunk has already been uploaded
 				URL url = new URL(_target + "/" + options.get("key"));
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 				connection.setRequestMethod("HEAD");
 				connection.setUseCaches(false);
 				int responseCode = connection.getResponseCode();
@@ -62,43 +62,40 @@ class UploadOperation implements Runnable {
 				JSONArray args = new JSONArray();
 				args.put(_source);
 				args.put(_target);
-				args.put("file");								// fileKey
-				args.put(source.getName());						// fileName
-				args.put("video/mp4");							// mimeType
-				args.put(options);								// params
-				args.put(false);								// trustEveryone
-				args.put(false);								// chunkedMode
-				args.put(_options.optJSONObject("headers"));	// headers
-				args.put(callbackId);							// objectId
-				args.put("POST");								// httpMethod
-				args.put(1800);									// timeout
-				args.put(offset);								// offset of first byte to upload
-				args.put(chunkSize);							// number of bytes to upload
+				args.put("file");                                // fileKey
+				args.put(source.getName());                        // fileName
+				args.put("video/mp4");                            // mimeType
+				args.put(options);                                // params
+				args.put(false);                                // trustEveryone
+				args.put(false);                                // chunkedMode
+				args.put(_options.optJSONObject("headers"));    // headers
+				args.put(callbackId);                            // objectId
+				args.put("POST");                                // httpMethod
+				args.put(1800);                                    // timeout
+				args.put(offset);                                // offset of first byte to upload
+				args.put(chunkSize);                            // number of bytes to upload
 
-				FileTransferCallbackContext fileTransferCallbackContext = new FileTransferCallbackContext(
-					callbackId,
-					new IEventListener() {
-						// Completed
-						@Override
-						public void invoke() {
-							latch.countDown();
-						}
-					}, new IStringEventListener() {
-						// Error
-						@Override
-						public void invoke(String value) {
-							latch.countDown();
-						}
-					}, new ILongEventListener() {
-						// Progress
-						@Override
-						public void invoke(long value) {
-							long totalBytesUploaded = offset + value;
-							double percentage = (double) totalBytesUploaded / sourceLength * 100;
-							_uploadOperationCallback.onUploadProgress(percentage);
-						}
+				FileTransferCallbackContext fileTransferCallbackContext = new FileTransferCallbackContext(callbackId, new IEventListener() {
+					// Completed
+					@Override
+					public void invoke() {
+						latch.countDown();
 					}
-				);
+				}, new IStringEventListener() {
+					// Error
+					@Override
+					public void invoke(String value) {
+						latch.countDown();
+					}
+				}, new ILongEventListener() {
+					// Progress
+					@Override
+					public void invoke(long value) {
+						long totalBytesUploaded = offset + value;
+						double percentage = (double)totalBytesUploaded / sourceLength * 100;
+						_uploadOperationCallback.onUploadProgress(percentage);
+					}
+				});
 
 				_fileTransfer.execute("upload", args, fileTransferCallbackContext);
 				latch.await();

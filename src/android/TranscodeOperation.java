@@ -59,10 +59,11 @@ class TranscodeOperation implements Runnable {
 
 		final MediaTranscoder.Listener listener = new MediaTranscoder.Listener() {
 			@Override
-			public void onTranscodeProgress(double progress) {
-				LOG.d(TAG, "transcode running " + progress);
+			public void onTranscodeCanceled() {
+				LOG.d(TAG, "transcode canceled");
 
-				_callback.onTranscodeProgress(progress * 100);
+				_callback.onTranscodeError("transcode canceled");
+				latch.countDown();
 			}
 
 			@Override
@@ -81,19 +82,18 @@ class TranscodeOperation implements Runnable {
 			}
 
 			@Override
-			public void onTranscodeCanceled() {
-				LOG.d(TAG, "transcode canceled");
-
-				_callback.onTranscodeError("transcode canceled");
-				latch.countDown();
-			}
-
-			@Override
 			public void onTranscodeFailed(Exception exception) {
 				LOG.d(TAG, "transcode exception", exception);
 
 				_callback.onTranscodeError(exception.toString());
 				latch.countDown();
+			}
+
+			@Override
+			public void onTranscodeProgress(double progress) {
+				LOG.d(TAG, "transcode running " + progress);
+
+				_callback.onTranscodeProgress(progress * 100);
 			}
 		};
 
@@ -117,11 +117,9 @@ class TranscodeOperation implements Runnable {
 			MediaTranscoder.getInstance().transcodeVideo(fin.getFD(), _dstPath, new CustomAndroidFormatStrategy(_videoBitrate, _fps, _width, _height), listener, _videoDuration);
 			latch.await();
 			fin.close();
-		}
-		catch (InterruptedException e) {
+		} catch (InterruptedException e) {
 			// Do nothing/
-		}
-		catch (Throwable e) {
+		} catch (Throwable e) {
 			LOG.d(TAG, "transcode exception ", e);
 
 			_callback.onTranscodeError(e.getMessage());

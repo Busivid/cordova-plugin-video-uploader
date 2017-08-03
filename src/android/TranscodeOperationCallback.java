@@ -23,6 +23,30 @@ class TranscodeOperationCallback {
 		_transcodeErrorBlock = transcodeErrorBlock;
 	}
 
+	public void onTranscodeComplete() {
+		if (_isError)
+			return;
+
+		LOG.d(TAG, "onTranscodeComplete");
+
+		JSONObject jsonObj = new JSONObject();
+		try {
+			jsonObj.put("progress", 100);
+			jsonObj.put("progressId", _progressId);
+			jsonObj.put("type", "TRANSCODE_COMPLETE");
+
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+
+		PluginResult progressResult = new PluginResult(PluginResult.Status.OK, jsonObj);
+		progressResult.setKeepCallback(true);
+
+		_callbackContext.sendPluginResult(progressResult);
+
+		_transcodeCompleteBlock.run();
+	}
+
 	public void onTranscodeError(String message) {
 		LOG.d(TAG, "onTranscodeError: " + message);
 
@@ -51,29 +75,5 @@ class TranscodeOperationCallback {
 		progressResult.setKeepCallback(true);
 
 		_callbackContext.sendPluginResult(progressResult);
-	}
-
-	public void onTranscodeComplete() {
-		if (_isError)
-			return;
-
-		LOG.d(TAG, "onTranscodeComplete");
-
-		JSONObject jsonObj = new JSONObject();
-		try {
-			jsonObj.put("progress", 100);
-			jsonObj.put("progressId", _progressId);
-			jsonObj.put("type", "TRANSCODE_COMPLETE");
-
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-
-		PluginResult progressResult = new PluginResult(PluginResult.Status.OK, jsonObj);
-		progressResult.setKeepCallback(true);
-
-		_callbackContext.sendPluginResult(progressResult);
-
-		_transcodeCompleteBlock.run();
 	}
 }

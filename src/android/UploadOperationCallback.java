@@ -27,14 +27,6 @@ class UploadOperationCallback {
 		return _progressId;
 	}
 
-	public void onUploadError(String message) {
-		LOG.d(TAG, "onUploadError: " + message);
-
-		_isError = true;
-		_uploadErrorBlock.Message = message;
-		_uploadErrorBlock.run();
-	}
-
 	public void onUploadComplete() {
 		if (_isError)
 			return;
@@ -55,6 +47,14 @@ class UploadOperationCallback {
 
 		_callbackContext.sendPluginResult(progressResult);
 		_uploadCompleteBlock.run();
+	}
+
+	public void onUploadError(String message) {
+		LOG.d(TAG, "onUploadError: " + message);
+
+		_isError = true;
+		_uploadErrorBlock.Message = message;
+		_uploadErrorBlock.run();
 	}
 
 	public void onUploadProgress(double percentage) {
