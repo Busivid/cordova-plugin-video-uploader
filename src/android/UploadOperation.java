@@ -17,7 +17,7 @@ class UploadOperation implements Runnable {
 
 	private final FileTransfer _fileTransfer;
 	private final JSONObject _options;
-	private final String _source;
+	private String _source;
 	private final String _target;
 	private final UploadOperationCallback _uploadOperationCallback;
 
@@ -27,6 +27,10 @@ class UploadOperation implements Runnable {
 		_source = source;
 		_target = options.getString("uploadUrl");
 		_uploadOperationCallback = uploadOperationCallback;
+	}
+
+	public void setSource(String value) {
+		_source = value;
 	}
 
 	@Override
