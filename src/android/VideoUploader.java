@@ -89,6 +89,8 @@ public class VideoUploader extends CordovaPlugin {
 				final String subject = tmpPath + "/" + progressId + "_compressed.mp4";
 				options.put("dstPath", subject);
 
+				final File subjectFile = new File(subject);
+
 				final FileTransfer fileTransfer = new FileTransfer();
 				fileTransfer.privateInitialize(this.getServiceName(), this.cordova, this.webView, this.preferences);
 
@@ -137,13 +139,11 @@ public class VideoUploader extends CordovaPlugin {
 						new Runnable() {
 							@Override
 							public void run() {
-								// If re-encoded file is larger, use the original instead.
-								File encoded = new File(subject);
-								if (encoded.length() > original.length()) {
+								if (subjectFile.length() > original.length()) {
 									LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
 									try {
 										uploadOperation.setSource(original.getAbsolutePath());
-										encoded.delete();
+										subjectFile.delete();
 									} catch (JSONException e) {
 										e.printStackTrace();
 									} catch (SecurityException e) {
