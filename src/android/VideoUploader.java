@@ -94,59 +94,74 @@ public class VideoUploader extends CordovaPlugin {
 
 				final URL uploadCompleteUrl = new URL(options.getString("callbackUrl"));
 
-				final UploadOperationCallback uploadOperationCallback = new UploadOperationCallback(callbackContext, progressId, new Runnable() {
-					@Override
-					public void run() {
-						reportUploadComplete(callbackContext, uploadCompleteUrl);
-						_completedUploads.add(progressId);
-						if (remaining.decrementAndGet() == 0)
-							callbackContext.success();
-					}
-				}, new UploadErrorBlock() {
-					@Override
-					public void run() {
-						abort();
-
-						JSONObject jsonObj = new JSONObject();
-						try {
-							jsonObj.put("completedTransfers", new JSONArray(_completedUploads));
-							jsonObj.put("message", Message);
-						} catch (JSONException e) {
-							e.printStackTrace();
+				final UploadOperationCallback uploadOperationCallback = new UploadOperationCallback(
+					callbackContext,
+					progressId,
+					new Runnable() {
+						@Override
+						public void run() {
+							reportUploadComplete(callbackContext, uploadCompleteUrl);
+							_completedUploads.add(progressId);
+							if (remaining.decrementAndGet() == 0)
+								callbackContext.success();
 						}
-						callbackContext.error(jsonObj);
+					},
+					new UploadErrorBlock() {
+						@Override
+						public void run() {
+							abort();
+
+							JSONObject jsonObj = new JSONObject();
+							try {
+								jsonObj.put("completedTransfers", new JSONArray(_completedUploads));
+								jsonObj.put("message", Message);
+							} catch (JSONException e) {
+								e.printStackTrace();
+							}
+							callbackContext.error(jsonObj);
+						}
 					}
-				});
+				);
 
 				// Prepare the upload operation
 				final UploadOperation uploadOperation = new UploadOperation(fileTransfer, subject, options, uploadOperationCallback);
 
 				// Prepare the transcode operation
-				final TranscodeOperation transcodeOperation = new TranscodeOperation(options, cordova, _utils, new TranscodeOperationCallback(callbackContext, progressId, new Runnable() {
-					@Override
-					public void run() {
-						// If re-encoded file is larger, use the original instead.
-						File encoded = new File(subject);
-						if (encoded.length() > original.length()) {
-							LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
-							try {
-								options.put("filePath", subject);
-								encoded.delete();
-							} catch (JSONException e) {
-								e.printStackTrace();
-							} catch (SecurityException e) {
-								e.printStackTrace();
+				final TranscodeOperation transcodeOperation = new TranscodeOperation(
+					options,
+					cordova,
+					_utils,
+					new TranscodeOperationCallback(
+						callbackContext,
+						progressId,
+						new Runnable() {
+							@Override
+							public void run() {
+								// If re-encoded file is larger, use the original instead.
+								File encoded = new File(subject);
+								if (encoded.length() > original.length()) {
+									LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
+									try {
+										options.put("filePath", subject);
+										encoded.delete();
+									} catch (JSONException e) {
+										e.printStackTrace();
+									} catch (SecurityException e) {
+										e.printStackTrace();
+									}
+								}
+
+								_uploadOperations.execute(uploadOperation);
+							}
+						},
+						new Runnable() {
+							@Override
+							public void run() {
+								abort();
 							}
 						}
-
-						_uploadOperations.execute(uploadOperation);
-					}
-				}, new Runnable() {
-					@Override
-					public void run() {
-						abort();
-					}
-				}));
+					)
+				);
 
 				// Enqueue transcode operation
 				_transcodeOperations.execute(transcodeOperation);
