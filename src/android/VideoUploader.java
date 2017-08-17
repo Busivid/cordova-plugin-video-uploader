@@ -169,7 +169,8 @@ public class VideoUploader extends CordovaPlugin {
 								abort();
 							}
 						}
-					)
+					),
+					this
 				);
 
 				// Enqueue transcode operation
@@ -219,6 +220,15 @@ public class VideoUploader extends CordovaPlugin {
 		cache.mkdirs();
 
 		return cache.getAbsolutePath();
+	}
+
+	public long getTotalTmpFileBytes() {
+		long result = 0;
+		for (File file : _tmpFiles) {
+			result += file.length();
+		}
+
+		return result;
 	}
 
 	private void reportUploadComplete(CallbackContext callbackContext, URL uploadCompleteUrl) {

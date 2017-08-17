@@ -1,5 +1,9 @@
 package com.busivid.cordova.videouploader;
 
+import android.media.MediaMetadataRetriever;
+import android.os.Environment;
+import android.os.StatFs;
+
 import net.ypresto.androidtranscoder.MediaTranscoder;
 
 import org.apache.cordova.CordovaInterface;
@@ -16,6 +20,7 @@ class TranscodeOperation implements Runnable {
 	private final String TAG = VideoUploader.TAG;
 
 	private final TranscodeOperationCallback _callback;
+	private final VideoUploader _context;
 	public final CordovaInterface _cordova;
 	private final File _dst;
 	private final String _dstPath;
@@ -28,8 +33,9 @@ class TranscodeOperation implements Runnable {
 	private final long _videoDuration;
 	private final int _width;
 
-	public TranscodeOperation(JSONObject options, CordovaInterface cordova, Utils utils, TranscodeOperationCallback callback) throws IOException, JSONException {
+	public TranscodeOperation(JSONObject options, CordovaInterface cordova, Utils utils, TranscodeOperationCallback callback, VideoUploader context) throws IOException, JSONException {
 		_callback = callback;
+		_context = context;
 		_cordova = cordova;
 
 		LOG.d(TAG, "options: " + options.toString());
@@ -98,8 +104,8 @@ class TranscodeOperation implements Runnable {
 		};
 
 		try {
-			// MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-			// mmr.setDataSource(_srcPath);
+			MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+			mmr.setDataSource(_srcPath);
 
 			// String rotation = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
 			// float videoWidth = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH));
@@ -110,6 +116,31 @@ class TranscodeOperation implements Runnable {
 			if (_dst.exists()) {
 				listener.onTranscodeCompleted();
 				return;
+			}
+
+			float durationSeconds = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+			if (durationSeconds > 0) {
+				long bytesRequired = (long)Math.ceil(durationSeconds * 1.3f * 1024 * 1024); // 1.3 MB per second
+
+				StatFs statFs = new StatFs(Environment.getDataDirectory().getAbsolutePath());
+				while (true) {
+					long bytesAvailable = statFs.getAvailableBytes();
+
+					// We're OK
+					if (bytesRequired < bytesAvailable)
+						break;
+
+					// We should be OK if we wait a while
+					long totalTmpFileBytes = _context.getTotalTmpFileBytes();
+					if (bytesRequired < bytesAvailable + totalTmpFileBytes) {
+						LOG.d(TAG, "transcode waiting on disk space. required: " + bytesRequired + " available: " + bytesAvailable + " tmpFiles: " + totalTmpFileBytes);
+						Thread.sleep(1000);
+						continue;
+					}
+
+					// We're totally screwed
+					throw new Exception("Insufficient disk space available");
+				}
 			}
 
 			final FileInputStream inputStream = new FileInputStream(_src);
