@@ -44,12 +44,14 @@ public class VideoUploader extends CordovaPlugin {
 	public static final String TAG = "VideoUploader";
 
 	private final List<String> _completedUploads;
+	private final List<File> _tmpFiles;
 	private ExecutorService _transcodeOperations;
 	private ExecutorService _uploadOperations;
 	private final Utils _utils;
 
 	public VideoUploader() {
 		_completedUploads = Collections.synchronizedList(new ArrayList<String>());
+		_tmpFiles = new ArrayList<File>();
 		_utils = new Utils(cordova);
 	}
 
@@ -90,6 +92,7 @@ public class VideoUploader extends CordovaPlugin {
 				options.put("dstPath", subject);
 
 				final File subjectFile = new File(subject);
+				_tmpFiles.add(subjectFile);
 
 				final FileTransfer fileTransfer = new FileTransfer();
 				fileTransfer.privateInitialize(this.getServiceName(), this.cordova, this.webView, this.preferences);
@@ -103,6 +106,11 @@ public class VideoUploader extends CordovaPlugin {
 						@Override
 						public void run() {
 							reportUploadComplete(callbackContext, uploadCompleteUrl);
+
+							// Free Disk Space (After Upload)
+							subjectFile.delete();
+							_tmpFiles.remove(subjectFile);
+
 							_completedUploads.add(progressId);
 							if (remaining.decrementAndGet() == 0)
 								callbackContext.success();
@@ -142,7 +150,10 @@ public class VideoUploader extends CordovaPlugin {
 								if (subjectFile.length() > original.length()) {
 									LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
 									uploadOperation.setSource(original.getAbsolutePath());
+
+									// Free Disk Space (Original File Preferred)
 									subjectFile.delete();
+									_tmpFiles.remove(subjectFile);
 								}
 
 								_uploadOperations.execute(uploadOperation);
@@ -151,6 +162,10 @@ public class VideoUploader extends CordovaPlugin {
 						new Runnable() {
 							@Override
 							public void run() {
+								// Free Disk Space (On Error)
+								subjectFile.delete();
+								_tmpFiles.remove(subjectFile);
+
 								abort();
 							}
 						}
