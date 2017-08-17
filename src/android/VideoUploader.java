@@ -141,14 +141,8 @@ public class VideoUploader extends CordovaPlugin {
 							public void run() {
 								if (subjectFile.length() > original.length()) {
 									LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
-									try {
-										uploadOperation.setSource(original.getAbsolutePath());
-										subjectFile.delete();
-									} catch (JSONException e) {
-										e.printStackTrace();
-									} catch (SecurityException e) {
-										e.printStackTrace();
-									}
+									uploadOperation.setSource(original.getAbsolutePath());
+									subjectFile.delete();
 								}
 
 								_uploadOperations.execute(uploadOperation);
