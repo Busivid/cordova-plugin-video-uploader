@@ -9,13 +9,13 @@
 
 - (void) cancel {
     [super cancel];
-    
+
     // Call abort on current file transfer
     if (fileTransfer != nil) {
-        
+
         NSMutableArray *args = [[NSMutableArray alloc] init];
         [args addObject:options[@"progressId"]];
-        
+
         CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"abort"];
         [fileTransfer abort:commandOptions];
     }
@@ -24,14 +24,14 @@
 - (id)initWithOptions:(NSDictionary *)opts commandDelegate:(id <CDVCommandDelegate>)cmdDelegate cordovaCallbackId:(NSString*)callbackId {
     if (![super init])
         return nil;
-    
+
     cordovaCallbackId = callbackId;
     commandDelegate = cmdDelegate;
     options = opts;
-    
+
     fileTransfer = [[CDVFileTransfer alloc] init];
     [fileTransfer pluginInitialize];
-    
+
     return self;
 }
 
@@ -39,7 +39,7 @@
     if (self.isCancelled) {
         return;
     }
-    
+
     if (source == nil || target == nil) {
         self.errorMessage = @"Source and target must be defined.";
         return;
@@ -52,21 +52,20 @@
     int requiredChunkCount = ceil(fileSize / (float)chunkSize);
     for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
         NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
-        
+
         NSDictionary *headers = options[@"headers"] == nil
         	? [[NSDictionary alloc] init]
         	: options[@"headers"];
-        
+
         NSDictionary *params = options[@"params"] == nil || options[@"params"][chunkNumber] == nil
         	? [[NSDictionary alloc] init]
         	: options[@"params"][chunkNumber];
-        
-        
+
         NSURL *expectedFileUrl = [target URLByAppendingPathComponent:params[@"key"]];
         bool isFileAlreadyUploaded = [self doesFileExistsAtUrl:expectedFileUrl];
         if(isFileAlreadyUploaded)
 	        continue;
-        
+
         //Order is important.
         NSMutableArray *args = [[NSMutableArray alloc] init];
         [args addObject:source.path];
@@ -83,44 +82,44 @@
         [args addObject:options[@"timeout"]];
         [args addObject:offset];
         [args addObject:[NSNumber numberWithInt:chunkSize]];
-        
+
         CDVInvokedUrlCommand* commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
         dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
-        
+
         UploadOperationCommandDelegate* delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate progressId:options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
         [delegate setCompletionBlock:^(NSString* errorMsg){
             errorMessage = errorMsg;
             dispatch_semaphore_signal(sessionWaitSemaphore);
         }];
         [fileTransfer setCommandDelegate:delegate];
-        
+
         // Auto-release pool required to let go of internal fileData object.
         @autoreleasepool {
         	[fileTransfer upload:commandOptions];
         	dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
         }
-            
+
         if (errorMessage != nil)
             return;
-        
+
         if (self.isCancelled)
             return;
     }
-	
+
 	if (uploadCompleteUrl != nil) {
         bool shouldRetry;
         do {
             shouldRetry = false;
-            
+
             NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
             [request setHTTPMethod:@"GET"];
             [request setURL:uploadCompleteUrl];
-            
+
             NSError *error = nil;
             NSHTTPURLResponse *callbackResponseCode = nil;
-            
+
             NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
-            
+
             // response code of the callback, not of the upload.
             if ([callbackResponseCode statusCode] == 503) {
                 //maintenance mode.
@@ -138,10 +137,10 @@
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setHTTPMethod:@"HEAD"];
     [request setURL:url];
-    
+
     NSError *error = nil;
     NSHTTPURLResponse *callbackResponseCode = nil;
-    
+
     NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
     return [callbackResponseCode statusCode] == 200;
 }

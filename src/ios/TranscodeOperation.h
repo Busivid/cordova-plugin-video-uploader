@@ -11,7 +11,7 @@
     NSURL *srcPath;
     NSNumber *videoDuration;
     NSNumber *width;
-    
+
     //NSNumber *fps;
     //NSNumber *height;
     //NSNumber *videoBitrate;

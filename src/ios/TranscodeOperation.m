@@ -18,7 +18,7 @@
 {
     if (![super init])
         return nil;
-    
+
     NSLog(@"Transcode options %@", options);
     commandDelegate = cmdDelegate;
     cordovaCallbackId = callbackId;
@@ -32,7 +32,7 @@
     //height = options[@"height"];
     //videoBitrate = options[@"videoBitrate"];
     //width = options[@"width"];
-    
+
     return self;
 }
 
@@ -43,18 +43,18 @@
     if (self.isCancelled) {
         return;
     }
-    
+
     if([[NSFileManager defaultManager] fileExistsAtPath:dstPath.path]) {
         return;
     }
-    
+
     AVURLAsset *avAsset = [AVURLAsset URLAssetWithURL:srcPath options:nil];
 
     exportSession = [[AVAssetExportSession alloc]initWithAsset:avAsset presetName: AVAssetExportPreset1280x720];
     exportSession.outputURL = dstPath;
     exportSession.outputFileType = AVFileTypeQuickTimeMovie;
     exportSession.shouldOptimizeForNetworkUse = YES;
- 
+
     int32_t preferredTimeScale = 600;
     CMTime startTime = CMTimeMakeWithSeconds(0, preferredTimeScale);
     CMTime stopTime = CMTimeMakeWithSeconds([videoDuration floatValue], preferredTimeScale);
@@ -93,7 +93,7 @@
     if ([exportSession status] == AVAssetExportSessionStatusCompleted) {
            [self reportProgress:[NSNumber numberWithInt:100]];
     }
-    
+
     if ([exportSession status] != AVAssetExportSessionStatusCompleted) {
         [[NSFileManager defaultManager] removeItemAtPath:dstPath.path error:nil];
     }
@@ -118,15 +118,15 @@
 // Forwards progress up to Javascript.
 - (void)reportProgress:(NSNumber*)progress {
     NSLog(@"%@", [NSString stringWithFormat:@"AVAssetExport running progress=%3.2f%%", [progress doubleValue]]);
-    
+
     if (self.commandDelegate != nil && cordovaCallbackId != nil) {
         NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
         [dictionary setValue: progress forKey: @"progress"];
         [dictionary setValue: progressId forKey: @"progressId"];
         [dictionary setValue: @"TRANSCODING" forKey: @"type"];
-        
+
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
-        
+
         [result setKeepCallbackAsBool:YES];
         [self.commandDelegate sendPluginResult:result callbackId:cordovaCallbackId];
     }

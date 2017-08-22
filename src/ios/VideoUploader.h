@@ -11,7 +11,7 @@
     NSString *latestCallbackId;
     NSOperationQueue *transcodingQueue;
     NSOperationQueue *uploadQueue;
-    
+
     NSObject *transcodeCallbackLock;
 }
 

@@ -27,28 +27,28 @@
 
 - (void)sendPluginResult:(CDVPluginResult*)result callbackId:(NSString*)callbackId {
     NSDictionary *messages = (NSDictionary*)result.message;
-    
+
     if ([messages objectForKey:@"lengthComputable"] == nil) {
         NSString *errorMessage;
         if ([result.status intValue] != CDVCommandStatus_OK) {
             errorMessage = @"Error uploading file. Please check your internet connection and try again.";
         }
-        
+
         completionBlock(errorMessage);
         return;
     }
-    
+
     NSNumber *totalBytesWritten = [NSNumber numberWithFloat:([messages[@"loaded"] floatValue] + [offset floatValue])];
     NSNumber *totalBytesExpectedToWrite = totalBytes;
-    
+
     NSNumber *progress = [NSNumber numberWithFloat:floorf(100.0f * [totalBytesWritten floatValue] / [totalBytesExpectedToWrite floatValue])];
-    
+
     if ([progress intValue] > [lastReportedProgress intValue]) {
     	NSMutableDictionary *uploadProgress = [[NSMutableDictionary alloc] initWithCapacity:3];
     	[uploadProgress setObject:progress forKey:@"progress"];
     	[uploadProgress setObject:progressId forKey:@"progressId"];
     	[uploadProgress setObject:@"UPLOADING" forKey:@"type"];
-        
+
         CDVPluginResult *newResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:uploadProgress];
         [newResult setKeepCallbackAsBool:true];
 
