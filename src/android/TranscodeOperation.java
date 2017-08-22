@@ -134,12 +134,14 @@ class TranscodeOperation implements Runnable {
 					long totalTmpFileBytes = _context.getTotalTmpFileBytes();
 					if (bytesRequired < bytesAvailable + totalTmpFileBytes) {
 						LOG.d(TAG, "transcode waiting on disk space. required: " + bytesRequired + " available: " + bytesAvailable + " tmpFiles: " + totalTmpFileBytes);
+						_callback.onTranscodeDiskLow();
 						Thread.sleep(1000);
 						continue;
 					}
 
 					// We're totally screwed
-					throw new Exception("Insufficient disk space available");
+					_callback.onTranscodeDiskLow();
+					throw new IOException("Insufficient disk space available");
 				}
 			}
 
@@ -149,10 +151,8 @@ class TranscodeOperation implements Runnable {
 			latch.await();
 			inputStream.close();
 		} catch (InterruptedException e) {
-			// Do nothing/
+			// Do nothing
 		} catch (Throwable e) {
-			LOG.d(TAG, "transcode exception ", e);
-
 			_callback.onTranscodeError(e.getMessage());
 		} finally {
 			if (!_isComplete) {

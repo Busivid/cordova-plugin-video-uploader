@@ -46,6 +46,7 @@ public class VideoUploader extends CordovaPlugin {
 	public static final String PROGRESS_UPLOADING = "PROGRESS_UPLOADING";
 	public static final String PROGRESS_TRANSCODED = "PROGRESS_TRANSCODED";
 	public static final String PROGRESS_TRANSCODING = "PROGRESS_TRANSCODING";
+	public static final String PROGRESS_TRANSCODING_ERROR = "PROGRESS_TRANSCODING_ERROR";
 	public static final String TAG = "VideoUploader";
 	public static final String WARNING_DISK_LOW = "WARNING_DISK_LOW";
 
@@ -154,12 +155,12 @@ public class VideoUploader extends CordovaPlugin {
 							@Override
 							public void run() {
 								if (subjectFile.length() > original.length()) {
-									LOG.d(TAG, "Encoded file is larger than the original, uploading the original instead.");
-									uploadOperation.setSource(original.getAbsolutePath());
-
 									// Free Disk Space (Original File Preferred)
 									subjectFile.delete();
 									_tmpFiles.remove(subjectFile);
+
+									LOG.d(TAG, "Encoded file is larger than the original, uploading the original file instead.");
+									uploadOperation.setSource(original.getAbsolutePath());
 								}
 
 								_uploadOperations.execute(uploadOperation);
@@ -172,7 +173,10 @@ public class VideoUploader extends CordovaPlugin {
 								subjectFile.delete();
 								_tmpFiles.remove(subjectFile);
 
-								abort();
+								LOG.d(TAG, "Transcoding Failed: Uploading the original file instead.");
+								uploadOperation.setSource(original.getAbsolutePath());
+
+								_uploadOperations.execute(uploadOperation);
 							}
 						}
 					),
