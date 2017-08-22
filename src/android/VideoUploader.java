@@ -41,7 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.HttpsURLConnection;
 
 public class VideoUploader extends CordovaPlugin {
+	public static final String ERROR_DISK_FULL = "ERROR_DISK_FULL";
+	public static final String PROGRESS_UPLOADED = "PROGRESS_UPLOADED";
+	public static final String PROGRESS_UPLOADING = "PROGRESS_UPLOADING";
+	public static final String PROGRESS_TRANSCODED = "PROGRESS_TRANSCODED";
+	public static final String PROGRESS_TRANSCODING = "PROGRESS_TRANSCODING";
 	public static final String TAG = "VideoUploader";
+	public static final String WARNING_DISK_LOW = "WARNING_DISK_LOW";
 
 	private final List<String> _completedUploads;
 	private final List<File> _tmpFiles;

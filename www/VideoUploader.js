@@ -1,5 +1,14 @@
 var exec = require('cordova/exec');
 
+exports.abort = function(success) {
+	var error = function(){};
+	exec(success, error, 'VideoUploader', 'abort', []);
+};
+
+exports.cleanUp = function (success, error) {
+	exec(success, error, 'VideoUploader', 'cleanUp', []);
+};
+
 exports.compressAndUpload = function (options, success, progress, error) {
 	var win = function (results) {
 		if (results !== null && typeof results.progress !== 'undefined') {
@@ -14,11 +23,9 @@ exports.compressAndUpload = function (options, success, progress, error) {
 	exec(win, error, 'VideoUploader', 'compressAndUpload', [options]);
 };
 
-exports.cleanUp = function (success, error) {
-	exec(success, error, 'VideoUploader', 'cleanUp', []);
-};
-
-exports.abort = function(success) {
-	var error = function(){};
-	exec(success, error, 'VideoUploader', 'abort', []);
-};
+exports.ERROR_DISK_FULL = 'ERROR_DISK_FULL';
+exports.PROGRESS_TRANSCODED = 'PROGRESS_TRANSCODED';
+exports.PROGRESS_TRANSCODING = 'PROGRESS_TRANSCODING';
+exports.PROGRESS_UPLOADED = 'PROGRESS_UPLOADED';
+exports.PROGRESS_UPLOADING = 'PROGRESS_UPLOADING';
+exports.WARNING_DISK_LOW = 'WARNING_DISK_LOW';
