@@ -41,14 +41,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.HttpsURLConnection;
 
 public class VideoUploader extends CordovaPlugin {
-	public static final String ERROR_DISK_FULL = "ERROR_DISK_FULL";
-	public static final String PROGRESS_UPLOADED = "PROGRESS_UPLOADED";
-	public static final String PROGRESS_UPLOADING = "PROGRESS_UPLOADING";
-	public static final String PROGRESS_TRANSCODED = "PROGRESS_TRANSCODED";
-	public static final String PROGRESS_TRANSCODING = "PROGRESS_TRANSCODING";
-	public static final String PROGRESS_TRANSCODING_ERROR = "PROGRESS_TRANSCODING_ERROR";
+	static final String PROGRESS_UPLOADED = "PROGRESS_UPLOADED";
+	static final String PROGRESS_UPLOADING = "PROGRESS_UPLOADING";
+	static final String PROGRESS_TRANSCODED = "PROGRESS_TRANSCODED";
+	static final String PROGRESS_TRANSCODING = "PROGRESS_TRANSCODING";
+	static final String PROGRESS_TRANSCODING_ERROR = "PROGRESS_TRANSCODING_ERROR";
 	public static final String TAG = "VideoUploader";
-	public static final String WARNING_DISK_LOW = "WARNING_DISK_LOW";
+	static final String WARNING_DISK_LOW = "WARNING_DISK_LOW";
 
 	private final List<String> _completedUploads;
 	private final List<File> _tmpFiles;
@@ -67,7 +66,7 @@ public class VideoUploader extends CordovaPlugin {
 		_uploadOperations.shutdownNow();
 	}
 
-	private void cleanup(final CallbackContext callbackContext) {
+	private void cleanUp() {
 		String tmpPath = getTempDirectoryPath();
 
 		File tmpDir = new File(tmpPath);
@@ -75,8 +74,6 @@ public class VideoUploader extends CordovaPlugin {
 			if (!file.isDirectory())
 				if (!file.delete())
 					LOG.d(TAG, "unable to delete: " + file.getAbsolutePath());
-
-		callbackContext.success();
 	}
 
 	private void compressAndUpload(JSONArray args, final CallbackContext callbackContext) {
@@ -115,6 +112,7 @@ public class VideoUploader extends CordovaPlugin {
 							reportUploadComplete(callbackContext, uploadCompleteUrl);
 
 							// Free Disk Space (After Upload)
+							//noinspection ResultOfMethodCallIgnored
 							subjectFile.delete();
 							_tmpFiles.remove(subjectFile);
 
@@ -156,6 +154,7 @@ public class VideoUploader extends CordovaPlugin {
 							public void run() {
 								if (subjectFile.length() > original.length()) {
 									// Free Disk Space (Original File Preferred)
+									//noinspection ResultOfMethodCallIgnored
 									subjectFile.delete();
 									_tmpFiles.remove(subjectFile);
 
@@ -170,6 +169,7 @@ public class VideoUploader extends CordovaPlugin {
 							@Override
 							public void run() {
 								// Free Disk Space (On Error)
+								//noinspection ResultOfMethodCallIgnored
 								subjectFile.delete();
 								_tmpFiles.remove(subjectFile);
 
@@ -209,7 +209,8 @@ public class VideoUploader extends CordovaPlugin {
 		}
 
 		if (action.equals("cleanUp")) {
-			cleanup(callbackContext);
+			cleanUp();
+			callbackContext.success();
 			return true;
 		}
 
@@ -232,7 +233,7 @@ public class VideoUploader extends CordovaPlugin {
 		return cache.getAbsolutePath();
 	}
 
-	public long getTotalTmpFileBytes() {
+	long getTotalTmpFileBytes() {
 		long result = 0;
 		for (File file : _tmpFiles) {
 			result += file.length();
