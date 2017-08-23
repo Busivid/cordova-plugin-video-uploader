@@ -50,7 +50,6 @@ class TranscodeOperationCallback {
 
 		_isError = true;
 		sendProgress(VideoUploader.PROGRESS_TRANSCODING_ERROR, 100);
-		sendProgress(VideoUploader.PROGRESS_TRANSCODED, 100);
 		_transcodeErrorBlock.run();
 	}
 
