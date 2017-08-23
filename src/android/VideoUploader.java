@@ -86,6 +86,7 @@ public class VideoUploader extends CordovaPlugin {
 			for (int i = 0; i < fileOptions.length(); i++) {
 				// Parse options
 				final JSONObject options = fileOptions.getJSONObject(i);
+				final Boolean deleteAfter = options.optBoolean("deleteAfter", false);
 				final String progressId = options.getString("progressId"); // mediaId
 
 				final File original = _utils.resolveLocalFileSystemURI(options.getString("filePath"));
@@ -110,6 +111,9 @@ public class VideoUploader extends CordovaPlugin {
 						@Override
 						public void run() {
 							reportUploadComplete(callbackContext, uploadCompleteUrl);
+
+							if (deleteAfter)
+								original.delete();
 
 							// Free Disk Space (After Upload)
 							//noinspection ResultOfMethodCallIgnored
@@ -160,7 +164,8 @@ public class VideoUploader extends CordovaPlugin {
 
 									LOG.d(TAG, "Encoded file is larger than the original, uploading the original file instead.");
 									uploadOperation.setSource(original.getAbsolutePath());
-								}
+								} else if (deleteAfter)
+									original.delete();
 
 								_uploadOperations.execute(uploadOperation);
 							}
