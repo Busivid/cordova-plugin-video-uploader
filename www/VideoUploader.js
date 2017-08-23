@@ -23,9 +23,9 @@ exports.compressAndUpload = function (options, success, progress, error) {
 	exec(win, error, 'VideoUploader', 'compressAndUpload', [options]);
 };
 
-exports.ERROR_DISK_FULL = 'ERROR_DISK_FULL';
 exports.PROGRESS_TRANSCODED = 'PROGRESS_TRANSCODED';
 exports.PROGRESS_TRANSCODING = 'PROGRESS_TRANSCODING';
+exports.PROGRESS_TRANSCODING_ERROR = 'PROGRESS_TRANSCODING_ERROR';
 exports.PROGRESS_UPLOADED = 'PROGRESS_UPLOADED';
 exports.PROGRESS_UPLOADING = 'PROGRESS_UPLOADING';
 exports.WARNING_DISK_LOW = 'WARNING_DISK_LOW';
