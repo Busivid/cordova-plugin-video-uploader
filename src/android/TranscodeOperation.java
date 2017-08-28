@@ -118,9 +118,9 @@ class TranscodeOperation implements Runnable {
 				return;
 			}
 
-			float durationSeconds = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-			if (durationSeconds > 0) {
-				long bytesRequired = (long)Math.ceil(durationSeconds * 1.3f * 1024 * 1024); // 1.3 MB per second
+			float durationMillis = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+			if (durationMillis > 0) {
+				long bytesRequired = (long)Math.ceil(durationMillis / 1000 * 1.3f * 1024 * 1024); // 1.3 MB per second
 
 				StatFs statFs = new StatFs(Environment.getDataDirectory().getAbsolutePath());
 				while (true) {
