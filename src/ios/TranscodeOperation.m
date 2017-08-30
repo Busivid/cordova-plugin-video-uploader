@@ -123,7 +123,7 @@
         NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
         [dictionary setValue: progress forKey: @"progress"];
         [dictionary setValue: progressId forKey: @"progressId"];
-        [dictionary setValue: @"TRANSCODING" forKey: @"type"];
+        [dictionary setValue: @"PROGRESS_TRANSCODING" forKey: @"type"];
 
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
 

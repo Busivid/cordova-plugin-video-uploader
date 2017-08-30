@@ -87,7 +87,7 @@
                 [completedTransfers addObject:progressId];
 
                 // Notify cordova a single upload is complete
-                [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"UPLOAD_COMPLETE"];
+                [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_UPLOADED"];
 
                 if ([transcodingQueue operationCount] == 0 && [uploadQueue operationCount] == 0) {
                     NSLog(@"[Done]");
@@ -109,13 +109,13 @@
 
                     if (weakTranscodeOperation.errorMessage != nil) {
                         // Notify cordova a single transcode errored.
-                        [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"TRANSCODE_ERROR"];
+                        [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_TRANSCODING_ERROR"];
 
                         // Transcoded failed, use original file in upload
                         [uploadOperation setSource:transcodingSrc];
                     } else {
                         // Notify cordova a single transcode is complete
-                        [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"TRANSCODE_COMPLETE"];
+                        [self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_TRANSCODED"];
 
                         NSFileManager *fileMgr = [NSFileManager defaultManager];
                         unsigned long long transcodingDstFileSize = [[fileMgr attributesOfItemAtPath:transcodingDst.path error:nil] fileSize];

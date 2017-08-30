@@ -47,7 +47,7 @@
     	NSMutableDictionary *uploadProgress = [[NSMutableDictionary alloc] initWithCapacity:3];
     	[uploadProgress setObject:progress forKey:@"progress"];
     	[uploadProgress setObject:progressId forKey:@"progressId"];
-    	[uploadProgress setObject:@"UPLOADING" forKey:@"type"];
+    	[uploadProgress setObject:@"PROGRESS_UPLOADING" forKey:@"type"];
 
         CDVPluginResult *newResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:uploadProgress];
         [newResult setKeepCallbackAsBool:true];
