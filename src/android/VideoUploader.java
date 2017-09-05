@@ -167,6 +167,9 @@ public class VideoUploader extends CordovaPlugin {
 								} else if (deleteAfter)
 									original.delete();
 
+								if (_uploadOperations.isShutdown())
+									return;
+
 								_uploadOperations.execute(uploadOperation);
 							}
 						},
@@ -177,6 +180,9 @@ public class VideoUploader extends CordovaPlugin {
 								//noinspection ResultOfMethodCallIgnored
 								subjectFile.delete();
 								_tmpFiles.remove(subjectFile);
+
+								if (_uploadOperations.isShutdown())
+									return;
 
 								LOG.d(TAG, "Transcoding Failed: Uploading the original file instead.");
 								uploadOperation.setSource(original.getAbsolutePath());
