@@ -51,7 +51,8 @@ class TranscodeOperation implements Runnable {
 
 		_dst = new File(_dstPath);
 
-		if (!_src.exists()) {
+		// if dst exists, then transcoding is skipped in the run method.
+		if (!_src.exists() && !_dst.exists()) {
 			LOG.d(TAG, "input file does not exist");
 			_callback.onTranscodeError("input video does not exist.");
 			return;
@@ -104,6 +105,12 @@ class TranscodeOperation implements Runnable {
 		};
 
 		try {
+
+			if (_dst.exists()) {
+				listener.onTranscodeCompleted();
+				return;
+			}
+
 			MediaMetadataRetriever mmr = new MediaMetadataRetriever();
 			mmr.setDataSource(_srcPath);
 
@@ -112,11 +119,6 @@ class TranscodeOperation implements Runnable {
 			// float videoHeight = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT));
 
 			// LOG.d(TAG, "rotation: " + rotation); // 0, 90, 180, or 270
-
-			if (_dst.exists()) {
-				listener.onTranscodeCompleted();
-				return;
-			}
 
 			float durationMillis = Float.parseFloat(mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
 			if (durationMillis > 0) {

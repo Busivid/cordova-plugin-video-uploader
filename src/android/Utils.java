@@ -141,12 +141,6 @@ public class Utils {
 			}
 		}
 
-		if (!fp.exists()) {
-			throw new FileNotFoundException();
-		}
-		if (!fp.canRead()) {
-			throw new IOException();
-		}
 		return fp;
 	}
 }

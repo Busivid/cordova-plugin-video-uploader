@@ -156,7 +156,9 @@ public class VideoUploader extends CordovaPlugin {
 						new Runnable() {
 							@Override
 							public void run() {
-								if (subjectFile.length() > original.length()) {
+								if (subjectFile.exists() && !original.exists()) {
+									LOG.d(TAG, "Using cached transcoded file");
+								} else if (subjectFile.length() > original.length()) {
 									// Free Disk Space (Original File Preferred)
 									//noinspection ResultOfMethodCallIgnored
 									subjectFile.delete();
