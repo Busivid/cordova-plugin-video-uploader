@@ -62,8 +62,28 @@ public class VideoUploader extends CordovaPlugin {
 	}
 
 	private void abort() {
+		abortAndShutDown(null, null);
+	}
+
+	private void abortAndShutDown(String message, CallbackContext callbackContext) {
+		// Ignore if already aborted.
+		if (_transcodeOperations.isShutdown() && _uploadOperations.isShutdown())
+			return;
+
 		_transcodeOperations.shutdownNow();
 		_uploadOperations.shutdownNow();
+
+		// If callbackContext, then return.
+		if (callbackContext != null) {
+			JSONObject jsonObj = new JSONObject();
+			try {
+				jsonObj.put("completedTransfers", new JSONArray(_completedUploads));
+				jsonObj.put("message", message);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			callbackContext.error(jsonObj);
+		}
 	}
 
 	private void cleanUp() {
@@ -128,16 +148,7 @@ public class VideoUploader extends CordovaPlugin {
 					new UploadErrorBlock() {
 						@Override
 						public void run() {
-							abort();
-
-							JSONObject jsonObj = new JSONObject();
-							try {
-								jsonObj.put("completedTransfers", new JSONArray(_completedUploads));
-								jsonObj.put("message", Message);
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
-							callbackContext.error(jsonObj);
+							abortAndShutDown(Message, callbackContext);
 						}
 					}
 				);
