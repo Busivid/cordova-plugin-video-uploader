@@ -9,18 +9,31 @@ exports.cleanUp = function (success, error) {
 	exec(success, error, 'VideoUploader', 'cleanUp', []);
 };
 
-exports.compressAndUpload = function (options, success, progress, error) {
-	var win = function (results) {
+exports.compressAndUpload = function (options, successCallback, progressCallback, errorCallback) {
+	var error = function (results) {
+		if (typeof results === 'undefined')
+			results = {};
+
+		if (typeof results.completedUploads === 'undefined' || !Array.isArray(results.completedUploads))
+			results.completedUploads = new Array();
+
+		if (typeof errorCallback === 'function')
+			errorCallback(results);
+	};
+
+	var success = function (results) {
 		if (results !== null && typeof results.progress !== 'undefined') {
-			if (typeof progress === 'function') {
-				progress(results.type, results.progressId, results.progress);
+			if (typeof progressCallback === 'function') {
+				progressCallback(results.type, results.progressId, results.progress);
 			}
 		} else {
-			success(results);
+			if (typeof successCallback === 'function') {
+				successCallback(results);
+			}
 		}
 	};
 
-	exec(win, error, 'VideoUploader', 'compressAndUpload', [options]);
+	exec(success, error, 'VideoUploader', 'compressAndUpload', [options]);
 };
 
 exports.PROGRESS_TRANSCODED = 'PROGRESS_TRANSCODED';
