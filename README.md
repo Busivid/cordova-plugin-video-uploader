@@ -15,7 +15,7 @@ Performs the following steps
 ## Usage
 
     function onVideoUploadError(error) {
-      console.log(error.completedTransfers); // Array of progressId
+      console.log(error.completedUploads); // Array of progressId
       console.log(error.message);
     }
 

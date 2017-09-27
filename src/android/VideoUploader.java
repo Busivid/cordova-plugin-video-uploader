@@ -80,7 +80,7 @@ public class VideoUploader extends CordovaPlugin {
 		if (callbackContext != null) {
 			JSONObject jsonObj = new JSONObject();
 			try {
-				jsonObj.put("completedTransfers", new JSONArray(_completedUploads));
+				jsonObj.put("completedUploads", new JSONArray(_completedUploads));
 				jsonObj.put("message", message);
 			} catch (JSONException e) {
 				e.printStackTrace();
