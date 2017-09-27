@@ -11,7 +11,7 @@ exports.cleanUp = function (success, error) {
 
 exports.compressAndUpload = function (options, successCallback, progressCallback, errorCallback) {
 	var error = function (results) {
-		if (typeof results === 'undefined')
+		if (typeof results === 'undefined' || results === null)
 			results = {};
 
 		if (typeof results.completedUploads === 'undefined' || !Array.isArray(results.completedUploads))
