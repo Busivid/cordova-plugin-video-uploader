@@ -20,6 +20,7 @@
         <source-file src="src/android/IStringEventListener.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/TranscodeOperation.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/TranscodeOperationCallback.java" target-dir="src/com/busivid/cordova/videouploader" />
+        <source-file src="src/android/UploadCompleteBlock.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/UploadErrorBlock.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/UploadOperation.java" target-dir="src/com/busivid/cordova/videouploader" />
         <source-file src="src/android/UploadOperationCallback.java" target-dir="src/com/busivid/cordova/videouploader" />

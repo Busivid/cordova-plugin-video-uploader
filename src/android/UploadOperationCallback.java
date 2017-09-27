@@ -12,10 +12,10 @@ class UploadOperationCallback {
 	private final CallbackContext _callbackContext;
 	private Boolean _isError;
 	private final String _progressId;
-	private final Runnable _uploadCompleteBlock;
+	private final UploadCompleteBlock _uploadCompleteBlock;
 	private final UploadErrorBlock _uploadErrorBlock;
 
-	public UploadOperationCallback(CallbackContext callbackContext, String progressId, Runnable uploadCompleteBlock, UploadErrorBlock uploadErrorBlock) {
+	public UploadOperationCallback(CallbackContext callbackContext, String progressId, UploadCompleteBlock uploadCompleteBlock, UploadErrorBlock uploadErrorBlock) {
 		_callbackContext = callbackContext;
 		_isError = false;
 		_progressId = progressId;
@@ -27,7 +27,7 @@ class UploadOperationCallback {
 		return _progressId;
 	}
 
-	public void onUploadComplete() {
+	public void onUploadComplete(long elapsedMillis) {
 		if (_isError)
 			return;
 
@@ -46,6 +46,7 @@ class UploadOperationCallback {
 		progressResult.setKeepCallback(true);
 
 		_callbackContext.sendPluginResult(progressResult);
+		_uploadCompleteBlock.ElapsedMillis = elapsedMillis;
 		_uploadCompleteBlock.run();
 	}
 

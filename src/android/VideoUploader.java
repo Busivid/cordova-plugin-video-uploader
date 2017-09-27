@@ -30,6 +30,9 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,10 +130,30 @@ public class VideoUploader extends CordovaPlugin {
 				final UploadOperationCallback uploadOperationCallback = new UploadOperationCallback(
 					callbackContext,
 					progressId,
-					new Runnable() {
+					new UploadCompleteBlock() {
 						@Override
 						public void run() {
-							reportUploadComplete(callbackContext, uploadCompleteUrl);
+							URL url = uploadCompleteUrl;
+							if (ElapsedMillis >= 0) {
+								try {
+									final URI oldUri = url.toURI();
+									final String param = "clientUploadSeconds=" + (int)(ElapsedMillis / 1000);
+
+									String query = oldUri.getQuery();
+									if (query == null)
+										query = param;
+									else
+										query += "&" + param;
+
+									url = new URI(oldUri.getScheme(), oldUri.getAuthority(), oldUri.getPath(), query, oldUri.getFragment()).toURL();
+								} catch (MalformedURLException exception) {
+									// Do Nothing
+								} catch (URISyntaxException exception) {
+									// Do Nothing
+								}
+							}
+
+							reportUploadComplete(callbackContext, url);
 
 							if (deleteAfter)
 								original.delete();

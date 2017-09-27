@@ -10,6 +10,7 @@ import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.CountDownLatch;
+import java.util.Date;
 
 class UploadOperation implements Runnable {
 	private static final int DEFAULT_UPLOAD_CHUNK_SIZE = 100 * 1024 * 1024;
@@ -20,6 +21,7 @@ class UploadOperation implements Runnable {
 	private String _source;
 	private final String _target;
 	private final UploadOperationCallback _uploadOperationCallback;
+	private Date _uploadStartTime;
 
 	public UploadOperation(FileTransfer fileTransfer, String source, JSONObject options, UploadOperationCallback uploadOperationCallback) throws JSONException {
 		_fileTransfer = fileTransfer;
@@ -43,6 +45,8 @@ class UploadOperation implements Runnable {
 			? 1
 			: (int)(sourceLength / chunkSize) + 1;
 
+		_uploadStartTime = new Date();
+
 		for (int i = 0; i < chunks; i++) {
 			final String callbackId = chunks > 1
 				? _uploadOperationCallback.getProgressId() + ".part" + (i + 1)
@@ -60,8 +64,10 @@ class UploadOperation implements Runnable {
 				connection.setRequestMethod("HEAD");
 				connection.setUseCaches(false);
 				int responseCode = connection.getResponseCode();
-				if (responseCode == 200)
+				if (responseCode == 200) {
+					_uploadStartTime = null;
 					continue;
+				}
 
 				JSONArray args = new JSONArray();
 				args.put(_source);
@@ -115,6 +121,10 @@ class UploadOperation implements Runnable {
 			}
 		}
 
-		_uploadOperationCallback.onUploadComplete();
+		long elapsed = _uploadStartTime == null
+			? -1
+			: System.currentTimeMillis() - _uploadStartTime.getTime();
+
+		_uploadOperationCallback.onUploadComplete(elapsed);
 	}
 }
