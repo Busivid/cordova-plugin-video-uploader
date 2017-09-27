@@ -39,7 +39,7 @@ class UploadOperation implements Runnable {
 		final long sourceLength = source.length();
 
 		final int chunkSize = _options.optInt("chunkSize", DEFAULT_UPLOAD_CHUNK_SIZE);
-		final int chunks = chunkSize < 1
+		final int chunks = chunkSize <= 0
 			? 1
 			: (int)(sourceLength / chunkSize) + 1;
 
