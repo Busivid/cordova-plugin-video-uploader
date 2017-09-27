@@ -104,30 +104,27 @@
 			return;
 	}
 
-	if (uploadCompleteUrl != nil) {
-		bool shouldRetry;
-		do {
-			shouldRetry = false;
+	if (uploadCompleteUrl == nil)
+		return;
 
-			NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-			[request setHTTPMethod:@"GET"];
-			[request setURL:uploadCompleteUrl];
+	while (true) {
+		NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+		[request setHTTPMethod:@"GET"];
+		[request setURL:uploadCompleteUrl];
 
-			NSError *error = nil;
-			NSHTTPURLResponse *callbackResponseCode = nil;
+		NSError *error = nil;
+		NSHTTPURLResponse *callbackResponseCode = nil;
+		NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
 
-			NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
+		if ([callbackResponseCode statusCode] == 503) {
+			[NSThread sleepForTimeInterval: 10.0f];
+			continue;
+		}
 
-			// response code of the callback, not of the upload.
-			if ([callbackResponseCode statusCode] == 503) {
-				//maintenance mode.
-				shouldRetry = true;
-				[NSThread sleepForTimeInterval: 10.0f];
-			} else if ([callbackResponseCode statusCode] != 200) {
-				self.errorMessage = @"Sorry, this action cannot be performed at this time. Please try again later.";
-				return;
-			}
-		} while (shouldRetry);
+		if ([callbackResponseCode statusCode] != 200)
+			self.errorMessage = @"Sorry, this action cannot be performed at this time. Please try again later.";
+
+		return;
 	}
 }
 
