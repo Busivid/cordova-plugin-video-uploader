@@ -15,7 +15,7 @@
 	NSObject *transcodeCallbackLock;
 }
 
-@property (copy) NSMutableArray *completedTransfers;
+@property (copy) NSMutableArray *completedUploads;
 
 - (void) abort:(CDVInvokedUrlCommand*)command;
 - (void) applicationDidEnterBackground:(UIApplication *)application;

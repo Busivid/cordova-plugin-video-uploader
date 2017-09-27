@@ -10,7 +10,7 @@
 #import "VideoUploader.h"
 
 @implementation VideoUploader
-@synthesize completedTransfers;
+@synthesize completedUploads;
 
 /*
  * Functions available via Cordova
@@ -45,7 +45,7 @@
 - (void) compressAndUpload:(CDVInvokedUrlCommand*) cmd {
 	NSLog(@"[VideoUploader]: compressAndUpload called");
 
-	completedTransfers = [[NSMutableArray alloc] init];
+	completedUploads = [[NSMutableArray alloc] init];
 	latestCallbackId = cmd.callbackId;
 
 	[self.commandDelegate runInBackground:^{
@@ -81,7 +81,7 @@
 				if (weakUpload.isCancelled)
 					return;
 
-				[completedTransfers addObject:progressId];
+				[completedUploads addObject:progressId];
 
 				// Notify cordova a single upload is complete
 				[self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_UPLOADED"];
@@ -150,7 +150,7 @@
 
 	NSMutableDictionary *results = [NSMutableDictionary dictionaryWithCapacity:2];
 	[results setObject:message forKey:@"message"];
-	[results setObject:completedTransfers forKey:@"completedTransfers"];
+	[results setObject:completedUploads forKey:@"completedUploads"];
 
 	[transcodingQueue cancelAllOperations];
 	[uploadQueue cancelAllOperations];
