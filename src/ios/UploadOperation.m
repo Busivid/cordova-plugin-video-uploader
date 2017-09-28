@@ -51,6 +51,7 @@
 		? 1
 		: ceil(fileSize / (float)chunkSize);
 
+	NSDate *uploadStartTime = [NSDate date];
 	for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
 		NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
 
@@ -64,8 +65,10 @@
 
 		NSURL *expectedFileUrl = [target URLByAppendingPathComponent:params[@"key"]];
 		bool isFileAlreadyUploaded = [self doesFileExistsAtUrl:expectedFileUrl];
-		if(isFileAlreadyUploaded)
+		if(isFileAlreadyUploaded) {
+			uploadStartTime = nil;
 			continue;
+		}
 
 		//Order is important.
 		NSMutableArray *args = [[NSMutableArray alloc] init];
@@ -107,7 +110,11 @@
 			return;
 	}
 
-	[self onUploadComplete];
+	NSTimeInterval elapsed = uploadStartTime == nil
+		? -1
+		: [[NSDate date] timeIntervalSinceDate: uploadStartTime];
+
+	[self onUploadComplete: elapsed];
 }
 
 - (bool) doesFileExistsAtUrl:(NSURL*) url {
@@ -122,7 +129,7 @@
 	return [callbackResponseCode statusCode] == 200;
 }
 
-- (void) onUploadComplete {
+- (void) onUploadComplete: (NSTimeInterval) elapsed {
 	if (uploadCompleteUrl == nil)
 		return;
 
@@ -130,6 +137,18 @@
 		NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
 		[request setHTTPMethod:@"GET"];
 		[request setURL:uploadCompleteUrl];
+
+		if (elapsed >= 0) {
+			// Add parameters to URL
+			NSURLComponents *url = [[NSURLComponents alloc] initWithURL:request.URL resolvingAgainstBaseURL:YES];
+			NSArray<NSURLQueryItem*> *queryItems = [url queryItems];
+
+			NSURLQueryItem *queryItem = [NSURLQueryItem queryItemWithName: @"clientUploadSeconds" value: [@(ceil(elapsed)) stringValue]];
+			queryItems = [queryItems arrayByAddingObject: queryItem];
+
+			[url setQueryItems: queryItems];
+			[request setURL:url.URL];
+		}
 
 		NSError *error = nil;
 		NSHTTPURLResponse *callbackResponseCode = nil;
