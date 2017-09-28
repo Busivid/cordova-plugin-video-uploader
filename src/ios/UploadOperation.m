@@ -107,6 +107,22 @@
 			return;
 	}
 
+	[self onUploadComplete];
+}
+
+- (bool) doesFileExistsAtUrl:(NSURL*) url {
+	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+	[request setHTTPMethod:@"HEAD"];
+	[request setURL:url];
+
+	NSError *error = nil;
+	NSHTTPURLResponse *callbackResponseCode = nil;
+
+	NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
+	return [callbackResponseCode statusCode] == 200;
+}
+
+- (void) onUploadComplete {
 	if (uploadCompleteUrl == nil)
 		return;
 
@@ -129,17 +145,5 @@
 
 		return;
 	}
-}
-
-- (bool) doesFileExistsAtUrl:(NSURL*) url {
-	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-	[request setHTTPMethod:@"HEAD"];
-	[request setURL:url];
-
-	NSError *error = nil;
-	NSHTTPURLResponse *callbackResponseCode = nil;
-
-	NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
-	return [callbackResponseCode statusCode] == 200;
 }
 @end
