@@ -1,11 +1,20 @@
 #import "UploadOperation.h"
 #import "UploadOperationCommandDelegate.h"
 
-@implementation UploadOperation
+@implementation UploadOperation {
+	NSMutableDictionary *_uploadCompleteUrlFields;
+}
+
 @synthesize errorMessage;
 @synthesize source;
 @synthesize target;
 @synthesize uploadCompleteUrl;
+@synthesize uploadCompleteUrlAuthorization;
+@synthesize uploadCompleteUrlMethod;
+
+- (void) addUploadCompleteUrlFields:(NSDictionary *) dict {
+	[_uploadCompleteUrlFields addEntriesFromDictionary:dict];
+}
 
 - (void) cancel {
 	[super cancel];
@@ -30,6 +39,8 @@
 
 	fileTransfer = [[CDVFileTransfer alloc] init];
 	[fileTransfer pluginInitialize];
+
+	_uploadCompleteUrlFields = [[NSMutableDictionary alloc] init];
 
 	return self;
 }
@@ -110,11 +121,11 @@
 			return;
 	}
 
-	NSTimeInterval elapsed = uploadStartTime == nil
+	NSTimeInterval clientUploadSeconds = uploadStartTime == nil
 		? -1
 		: [[NSDate date] timeIntervalSinceDate: uploadStartTime];
 
-	[self onUploadComplete: elapsed];
+	[self onUploadComplete: clientUploadSeconds];
 }
 
 - (bool) doesFileExistsAtUrl:(NSURL*) url {
@@ -129,25 +140,50 @@
 	return [callbackResponseCode statusCode] == 200;
 }
 
-- (void) onUploadComplete: (NSTimeInterval) elapsed {
+- (void) onUploadComplete: (NSTimeInterval) clientUploadSeconds {
 	if (uploadCompleteUrl == nil)
 		return;
 
 	while (true) {
 		NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-		[request setHTTPMethod:@"GET"];
+		[request setHTTPMethod:uploadCompleteUrlMethod];
 		[request setURL:uploadCompleteUrl];
 
-		if (elapsed >= 0) {
-			// Add parameters to URL
-			NSURLComponents *url = [[NSURLComponents alloc] initWithURL:request.URL resolvingAgainstBaseURL:YES];
-			NSArray<NSURLQueryItem*> *queryItems = [url queryItems];
+		if (uploadCompleteUrlAuthorization != nil) {
+			[request setValue:uploadCompleteUrlAuthorization forHTTPHeaderField:@"Authorization"];
+		}
 
-			NSURLQueryItem *queryItem = [NSURLQueryItem queryItemWithName: @"clientUploadSeconds" value: [@(ceil(elapsed)) stringValue]];
-			queryItems = [queryItems arrayByAddingObject: queryItem];
+		if (clientUploadSeconds >= 0) {
+			if ([uploadCompleteUrlMethod isEqualToString:@"GET"]) {
+				// Add parameters to URL
+				NSURLComponents *url = [[NSURLComponents alloc] initWithURL:request.URL resolvingAgainstBaseURL:YES];
+				NSArray<NSURLQueryItem*> *queryItems = [url queryItems];
 
-			[url setQueryItems: queryItems];
-			[request setURL:url.URL];
+				NSURLQueryItem *queryItem = [NSURLQueryItem queryItemWithName: @"ClientUploadSeconds" value: [@(ceil(clientUploadSeconds)) stringValue]];
+				queryItems = [queryItems arrayByAddingObject: queryItem];
+
+				[url setQueryItems: queryItems];
+				[request setURL:url.URL];
+			} else if ([uploadCompleteUrlMethod isEqualToString:@"POST"] || [uploadCompleteUrlMethod isEqualToString:@"PUT"]) {
+				[_uploadCompleteUrlFields setObject:[@(ceil(clientUploadSeconds)) stringValue] forKey:@"ClientUploadSeconds"];
+			}
+		}
+
+		if ([uploadCompleteUrlMethod isEqualToString:@"POST"] || [uploadCompleteUrlMethod isEqualToString:@"PUT"]) {
+			NSError *jsonError = nil;
+			NSData *jsonData = [NSJSONSerialization dataWithJSONObject:_uploadCompleteUrlFields options:NSJSONWritingPrettyPrinted error:&jsonError];
+			if (!jsonData) {
+				NSLog(@"Got an error: %@", jsonError);
+				return;
+			}
+
+			NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+			NSData *requestData = [NSData dataWithBytes:[jsonString UTF8String] length:[jsonString lengthOfBytesUsingEncoding:NSUTF8StringEncoding]];
+
+			[request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
+			[request setValue:@"application/json; charset=UTF-8" forHTTPHeaderField:@"Content-Type"];
+			[request setValue:[NSString stringWithFormat:@"%lu", (unsigned long)[requestData length]] forHTTPHeaderField:@"Content-Length"];
+			[request setHTTPBody: requestData];
 		}
 
 		NSError *error = nil;

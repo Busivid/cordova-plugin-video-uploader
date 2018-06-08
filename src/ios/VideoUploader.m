@@ -63,13 +63,28 @@
 			// Get all required parameters from options.
 			NSURL *transcodingDst = [NSURL fileURLWithPath:transcodingDstFilePath];
 			NSURL *transcodingSrc = [NSURL URLWithString:options[@"filePath"]];
+
 			NSURL *uploadCompleteUrl = [NSURL URLWithString:options[@"callbackUrl"]];
+			NSString *uploadCompleteUrlAuthorization = options[@"callbackUrlAuthorization"];
+			NSMutableDictionary *uploadCompleteUrlFields = [[NSMutableDictionary alloc] init];
+			if (options[@"callbackUrlFields"] != nil) {
+				NSDictionary *callbackUrlFields = options[@"callbackUrlFields"];
+				[uploadCompleteUrlFields addEntriesFromDictionary:callbackUrlFields];
+			}
+
+			NSString *uploadCompleteUrlMethod = options[@"callbackUrlMethod"] == nil
+				? @"GET"
+				: options[@"callbackUrlMethod"];
+
 			NSURL *uploadUrl = [NSURL URLWithString:options[@"uploadUrl"]];
 
 			// Initialise UploadOperation which is added to UploadQueue on completetionBlock of transcoding operation
 			UploadOperation *uploadOperation = [[UploadOperation alloc] initWithOptions:options commandDelegate:self.commandDelegate cordovaCallbackId:latestCallbackId];
-			[uploadOperation setUploadCompleteUrl:uploadCompleteUrl];
 			[uploadOperation setTarget:uploadUrl];
+			[uploadOperation setUploadCompleteUrl:uploadCompleteUrl];
+			[uploadOperation setUploadCompleteUrlAuthorization:uploadCompleteUrlAuthorization];
+			[uploadOperation addUploadCompleteUrlFields:uploadCompleteUrlFields];
+			[uploadOperation setUploadCompleteUrlMethod:uploadCompleteUrlMethod];
 
 			__weak UploadOperation *weakUpload = uploadOperation;
 			[weakUpload setCompletionBlock:^{
@@ -88,6 +103,8 @@
 
 				if ([transcodingQueue operationCount] == 0 && [uploadQueue operationCount] == 0) {
 					NSLog(@"[Done]");
+
+					// Notify cordova all operations are complete
 					[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:latestCallbackId];
 					[self removeBackgroundTask];
 				}
