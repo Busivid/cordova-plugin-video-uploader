@@ -8,7 +8,7 @@
 
 @interface VideoUploader : CDVPlugin
 
-@property (copy) NSMutableArray *completedUploads;
+@property (readonly) NSMutableArray *completedUploads;
 
 - (void) abort:(CDVInvokedUrlCommand *)command;
 - (void) applicationDidEnterBackground:(UIApplication *)application;

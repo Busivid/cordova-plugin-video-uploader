@@ -3,17 +3,15 @@
 #import "TranscodeOperation.h"
 
 @implementation TranscodeOperation {
-	id <CDVCommandDelegate> __weak commandDelegate;
-	NSString *cordovaCallbackId;
-	NSURL *dstPath;
+	id <CDVCommandDelegate> __weak _commandDelegate;
+	NSString *_cordovaCallbackId;
+	NSURL *_dstPath;
 	AVAssetExportSession *exportSession;
-	NSString *progressId;
-	NSURL *srcPath;
-	NSNumber *videoDuration;
-	NSNumber *width;
+	NSString *_progressId;
+	NSURL *_srcPath;
+	NSNumber *_videoDuration;
 }
 
-@synthesize commandDelegate;
 @synthesize errorMessage;
 
 - (void) cancel {
@@ -23,48 +21,42 @@
 	}
 }
 
-- (id) initWithFilePath:(NSURL *) src dst:(NSURL *) dst options:(NSDictionary *) options commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString *) callbackId
+- (id) initWithFilePath:(NSURL *) src dst:(NSURL *) dst options:(NSDictionary *) options commandDelegate:(id <CDVCommandDelegate>) delegate cordovaCallbackId:(NSString *) callbackId
 {
 	if (![super init])
 		return nil;
 
 	NSLog(@"Transcode options %@", options);
-	commandDelegate = cmdDelegate;
-	cordovaCallbackId = callbackId;
-	dstPath = dst;
-	progressId = options[@"progressId"];
-	srcPath = src;
-	videoDuration = options[@"maxSeconds"];
-
-	// Fields that can be used by android version, yet are not implemented yet in iOS.
-	// fps = options["@fps"];
-	// height = options[@"height"];
-	// videoBitrate = options[@"videoBitrate"];
-	// width = options[@"width"];
+	_commandDelegate = delegate;
+	_cordovaCallbackId = callbackId;
+	_dstPath = dst;
+	_progressId = options[@"progressId"];
+	_srcPath = src;
+	_videoDuration = options[@"maxSeconds"];
 
 	return self;
 }
 
 - (void) main {
-	NSLog(@"[TranscodeOperation]: inputFilePath: %@", srcPath);
-	NSLog(@"[TranscodeOperation]: outputPath: %@", dstPath);
+	NSLog(@"[TranscodeOperation]: inputFilePath: %@", _srcPath);
+	NSLog(@"[TranscodeOperation]: outputPath: %@", _dstPath);
 
 	if (self.isCancelled)
 		return;
 
-	if ([[NSFileManager defaultManager] fileExistsAtPath:dstPath.path])
+	if ([[NSFileManager defaultManager] fileExistsAtPath:_dstPath.path])
 		return;
 
-	AVURLAsset *avAsset = [AVURLAsset URLAssetWithURL:srcPath options:nil];
+	AVURLAsset *avAsset = [AVURLAsset URLAssetWithURL:_srcPath options:nil];
 
 	exportSession = [[AVAssetExportSession alloc]initWithAsset:avAsset presetName: AVAssetExportPreset1280x720];
-	exportSession.outputURL = dstPath;
+	exportSession.outputURL = _dstPath;
 	exportSession.outputFileType = AVFileTypeQuickTimeMovie;
 	exportSession.shouldOptimizeForNetworkUse = YES;
 
 	int32_t preferredTimeScale = 600;
 	CMTime startTime = CMTimeMakeWithSeconds(0, preferredTimeScale);
-	CMTime stopTime = CMTimeMakeWithSeconds([videoDuration floatValue], preferredTimeScale);
+	CMTime stopTime = CMTimeMakeWithSeconds([_videoDuration floatValue], preferredTimeScale);
 	CMTimeRange exportTimeRange = CMTimeRangeFromTimeToTime(startTime, stopTime);
 	exportSession.timeRange = exportTimeRange;
 
@@ -102,7 +94,7 @@
 	}
 
 	if ([exportSession status] != AVAssetExportSessionStatusCompleted)
-		[[NSFileManager defaultManager] removeItemAtPath:dstPath.path error:nil];
+		[[NSFileManager defaultManager] removeItemAtPath:_dstPath.path error:nil];
 
 	switch ([exportSession status]) {
 		case AVAssetExportSessionStatusCompleted:
@@ -128,16 +120,16 @@
 - (void) reportProgress:(NSNumber *) progress {
 	NSLog(@"%@", [NSString stringWithFormat:@"AVAssetExport running progress=%3.2f%%", [progress doubleValue]]);
 
-	if (self.commandDelegate != nil && cordovaCallbackId != nil) {
+	if (_commandDelegate != nil && _cordovaCallbackId != nil) {
 		NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
 		[dictionary setValue: progress forKey: @"progress"];
-		[dictionary setValue: progressId forKey: @"progressId"];
+		[dictionary setValue: _progressId forKey: @"progressId"];
 		[dictionary setValue: @"PROGRESS_TRANSCODING" forKey: @"type"];
 
 		CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
 
 		[result setKeepCallbackAsBool:YES];
-		[self.commandDelegate sendPluginResult:result callbackId:cordovaCallbackId];
+		[_commandDelegate sendPluginResult:result callbackId:_cordovaCallbackId];
 	}
 }
 

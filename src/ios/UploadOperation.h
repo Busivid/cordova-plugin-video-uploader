@@ -5,9 +5,9 @@
 
 @interface UploadOperation : NSOperation
 
-@property (retain) NSString *errorMessage;
-@property (retain) NSURL *source;
-@property (retain) NSURL *target;
+@property (readonly) NSString *errorMessage;
+@property (copy) NSURL *source;
+@property (copy) NSURL *target;
 @property (copy) NSURL *uploadCompleteUrl;
 @property (copy) NSString *uploadCompleteUrlAuthorization;
 @property (copy) NSString *uploadCompleteUrlMethod;

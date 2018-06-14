@@ -4,12 +4,10 @@
 @implementation UploadOperation {
 	NSMutableDictionary *_uploadCompleteUrlFields;
 
-	id <CDVCommandDelegate> __weak commandDelegate;
-	NSString *cordovaCallbackId;
-	CDVFileTransfer *fileTransfer;
-	NSDictionary *options;
-	NSURL *source;
-	NSURL *target;
+	id <CDVCommandDelegate> __weak _commandDelegate;
+	NSString *_cordovaCallbackId;
+	CDVFileTransfer *_fileTransfer;
+	NSDictionary *_options;
 }
 
 @synthesize errorMessage;
@@ -27,12 +25,12 @@
 	[super cancel];
 
 	// Call abort on current file transfer
-	if (fileTransfer != nil) {
+	if (_fileTransfer != nil) {
 		NSMutableArray *args = [[NSMutableArray alloc] init];
-		[args addObject:options[@"progressId"]];
+		[args addObject:_options[@"progressId"]];
 
-		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"abort"];
-		[fileTransfer abort:commandOptions];
+		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:_cordovaCallbackId className:@"CDVFileTransfer" methodName:@"abort"];
+		[_fileTransfer abort:commandOptions];
 	}
 }
 
@@ -48,16 +46,16 @@
 	return [callbackResponseCode statusCode] == 200;
 }
 
-- (id) initWithOptions:(NSDictionary *) opts commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString *) callbackId {
+- (id) initWithOptions:(NSDictionary *) options commandDelegate:(id <CDVCommandDelegate>) delegate cordovaCallbackId:(NSString *) callbackId {
 	if (![super init])
 		return nil;
 
-	cordovaCallbackId = callbackId;
-	commandDelegate = cmdDelegate;
-	options = opts;
+	_cordovaCallbackId = callbackId;
+	_commandDelegate = delegate;
+	_options = options;
 
-	fileTransfer = [[CDVFileTransfer alloc] init];
-	[fileTransfer pluginInitialize];
+	_fileTransfer = [[CDVFileTransfer alloc] init];
+	[_fileTransfer pluginInitialize];
 
 	_uploadCompleteUrlFields = [[NSMutableDictionary alloc] init];
 
@@ -69,14 +67,14 @@
 		return;
 
 	if (source == nil || target == nil) {
-		self.errorMessage = @"Source and target must be defined.";
+		errorMessage = @"Source and target must be defined.";
 		return;
 	}
 
 	unsigned long long fileSize = [[[NSFileManager defaultManager] attributesOfItemAtPath:source.path error:nil] fileSize];
 	NSString *fileName = [[source path] lastPathComponent];
 
-	int chunkSize = [options[@"chunkSize"] intValue];
+	int chunkSize = [_options[@"chunkSize"] intValue];
 	int requiredChunkCount = chunkSize <= 0
 		? 1
 		: ceil(fileSize / (float)chunkSize);
@@ -85,13 +83,13 @@
 	for(int chunkNumber = 0; chunkNumber < requiredChunkCount; chunkNumber++) {
 		NSNumber *offset = [NSNumber numberWithInt:chunkSize * chunkNumber];
 
-		NSDictionary *headers = options[@"headers"] == nil
+		NSDictionary *headers = _options[@"headers"] == nil
 			? [[NSDictionary alloc] init]
-			: options[@"headers"];
+			: _options[@"headers"];
 
-		NSDictionary *params = options[@"params"] == nil || options[@"params"][chunkNumber] == nil
+		NSDictionary *params = _options[@"params"] == nil || _options[@"params"][chunkNumber] == nil
 			? [[NSDictionary alloc] init]
-			: options[@"params"][chunkNumber];
+			: _options[@"params"][chunkNumber];
 
 		NSURL *expectedFileUrl = [target URLByAppendingPathComponent:params[@"key"]];
 		bool isFileAlreadyUploaded = [self doesFileExistsAtUrl:expectedFileUrl];
@@ -111,25 +109,25 @@
 		[args addObject:[NSNumber numberWithInt:0]]	;
 		[args addObject:[NSNumber numberWithInt:1]];
 		[args addObject:headers];
-		[args addObject:options[@"progressId"]];
+		[args addObject:_options[@"progressId"]];
 		[args addObject:@"POST"];
-		[args addObject:options[@"timeout"]];
+		[args addObject:_options[@"timeout"]];
 		[args addObject:offset];
 		[args addObject:[NSNumber numberWithInt:chunkSize]];
 
-		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
+		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:_cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
 		dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
 
-		UploadOperationCommandDelegate *delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate progressId:options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
+		UploadOperationCommandDelegate *delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:_commandDelegate progressId:_options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
 		[delegate setCompletionBlock:^(NSString *errorMsg){
 			errorMessage = errorMsg;
 			dispatch_semaphore_signal(sessionWaitSemaphore);
 		}];
-		[fileTransfer setCommandDelegate:delegate];
+		[_fileTransfer setCommandDelegate:delegate];
 
 		// Auto-release pool required to let go of internal fileData object.
 		@autoreleasepool {
-			[fileTransfer upload:commandOptions];
+			[_fileTransfer upload:commandOptions];
 			dispatch_semaphore_wait(sessionWaitSemaphore, DISPATCH_TIME_FOREVER);
 		}
 
@@ -203,7 +201,7 @@
 		}
 
 		if ([callbackResponseCode statusCode] != 200)
-			self.errorMessage = @"Sorry, this action cannot be performed at this time. Please try again later.";
+			errorMessage = @"Sorry, this action cannot be performed at this time. Please try again later.";
 
 		return;
 	}

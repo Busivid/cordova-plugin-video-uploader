@@ -112,8 +112,9 @@
 			[uploadOperation setTarget:uploadUrl];
 			[uploadOperation setUploadCompleteUrl:uploadCompleteUrl];
 			[uploadOperation setUploadCompleteUrlAuthorization:uploadCompleteUrlAuthorization];
-			[uploadOperation addUploadCompleteUrlFields:uploadCompleteUrlFields];
 			[uploadOperation setUploadCompleteUrlMethod:uploadCompleteUrlMethod];
+
+			[uploadOperation addUploadCompleteUrlFields:uploadCompleteUrlFields];
 
 			__weak UploadOperation *weakUpload = uploadOperation;
 			[weakUpload setCompletionBlock:^{
