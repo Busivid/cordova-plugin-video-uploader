@@ -9,12 +9,41 @@
 #import "TranscodeOperation.h"
 #import "VideoUploader.h"
 
-@implementation VideoUploader
+@implementation VideoUploader {
+	UIBackgroundTaskIdentifier backgroundTaskID;
+	NSString *latestCallbackId;
+	NSObject *transcodeCallbackLock;
+	NSOperationQueue *transcodingQueue;
+	NSOperationQueue *uploadQueue;
+}
+
 @synthesize completedUploads;
 
-/*
- * Functions available via Cordova
- */
+- (void) abort:(CDVInvokedUrlCommand*) cmd {
+	[transcodingQueue cancelAllOperations];
+	[uploadQueue cancelAllOperations];
+	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:latestCallbackId];
+}
+
+- (void) applicationDidEnterBackground:(UIApplication *) application {
+	NSLog(@"[VideoUploader]: applicationDidEnterBackground called");
+
+	// if stuff in queues, request a background task.
+	if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
+		backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+			NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
+			[self handleFatalError:errorMessage withCallbackId:latestCallbackId];
+			[self removeBackgroundTask];
+		}];
+	}
+}
+
+- (void) applicationWillEnterForeground:(UIApplication*) application {
+	NSLog(@"[VideoUploader]: applicationWillEnterForeground called");
+
+	[self removeBackgroundTask];
+}
+
 - (void) cleanUp:(CDVInvokedUrlCommand*) cmd {
 	NSLog(@"[VideoUploader]: cleanUp called");
 
@@ -153,15 +182,20 @@
 	}];
 }
 
-- (void) abort:(CDVInvokedUrlCommand*) cmd {
-	[transcodingQueue cancelAllOperations];
-	[uploadQueue cancelAllOperations];
-	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:latestCallbackId];
+- (NSString*) getTempTranscodingFile:(NSString*) progressId {
+	// Ensure the cache directory exists.
+	NSFileManager *fileMgr = [NSFileManager defaultManager];
+	NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+	NSString *videoDir = [cacheDir stringByAppendingPathComponent:@"mp4"];
+
+	if ([fileMgr createDirectoryAtPath:videoDir withIntermediateDirectories:YES attributes:nil error: NULL] == NO)
+		return nil;
+
+	// Get a unique compressed file name.
+	NSString *videoOutput = [videoDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [NSString stringWithFormat:@"%@_compressed", progressId], @"mp4"]];
+	return videoOutput;
 }
 
-/*
- * Helper functions
- */
 - (void) handleFatalError:(NSString*) message withCallbackId:(NSString*) callbackId {
 	NSLog(@"[VideoUploader]: handleFatalError called");
 
@@ -188,43 +222,6 @@
 	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:results] callbackId:callbackId];
 }
 
-- (NSString*) getTempTranscodingFile:(NSString*) progressId {
-	// Ensure the cache directory exists.
-	NSFileManager *fileMgr = [NSFileManager defaultManager];
-	NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-	NSString *videoDir = [cacheDir stringByAppendingPathComponent:@"mp4"];
-
-	if ([fileMgr createDirectoryAtPath:videoDir withIntermediateDirectories:YES attributes:nil error: NULL] == NO)
-		return nil;
-
-	// Get a unique compressed file name.
-	NSString *videoOutput = [videoDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@", [NSString stringWithFormat:@"%@_compressed", progressId], @"mp4"]];
-	return videoOutput;
-}
-
-- (void) reportProgress:(NSString*) callbackId progress:(NSNumber*) progress progressId:(NSString*) progressId type:(NSString*) type {
-	NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
-	[dictionary setValue: progress forKey: @"progress"];
-	[dictionary setValue: progressId forKey: @"progressId"];
-	[dictionary setValue: type forKey: @"type"];
-	CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
-	[result setKeepCallbackAsBool:YES];
-	[self.commandDelegate sendPluginResult:result callbackId:callbackId];
-}
-
-- (void) removeBackgroundTask {
-	NSLog(@"[VideoUploader]: removeBackgroundTask called");
-
-	if (backgroundTaskID != UIBackgroundTaskInvalid) {
-		[[UIApplication sharedApplication] endBackgroundTask:backgroundTaskID];
-		backgroundTaskID = UIBackgroundTaskInvalid;
-	}
-}
-
-/*
- * Events
- */
-
 - (void) pluginInitialize {
 	NSLog(@"[VideoUploader]: pluginInitalize called");
 
@@ -237,22 +234,23 @@
 	uploadQueue.maxConcurrentOperationCount = 1;
 }
 
-- (void)applicationWillEnterForeground:(UIApplication*) application {
-	NSLog(@"[VideoUploader]: applicationWillEnterForeground called");
+- (void) removeBackgroundTask {
+	NSLog(@"[VideoUploader]: removeBackgroundTask called");
 
-	[self removeBackgroundTask];
-}
-
-- (void)applicationDidEnterBackground:(UIApplication *) application {
-	NSLog(@"[VideoUploader]: applicationDidEnterBackground called");
-
-	// if stuff in queues, request a background task.
-	if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
-		backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-			NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
-			[self handleFatalError:errorMessage withCallbackId:latestCallbackId];
-			[self removeBackgroundTask];
-		}];
+	if (backgroundTaskID != UIBackgroundTaskInvalid) {
+		[[UIApplication sharedApplication] endBackgroundTask:backgroundTaskID];
+		backgroundTaskID = UIBackgroundTaskInvalid;
 	}
 }
+
+- (void) reportProgress:(NSString*) callbackId progress:(NSNumber*) progress progressId:(NSString*) progressId type:(NSString*) type {
+	NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
+	[dictionary setValue: progress forKey: @"progress"];
+	[dictionary setValue: progressId forKey: @"progressId"];
+	[dictionary setValue: type forKey: @"type"];
+	CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
+	[result setKeepCallbackAsBool:YES];
+	[self.commandDelegate sendPluginResult:result callbackId:callbackId];
+}
+
 @end

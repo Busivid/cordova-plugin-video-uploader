@@ -29,6 +29,18 @@
 	}
 }
 
+- (bool) doesFileExistsAtUrl:(NSURL*) url {
+	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+	[request setHTTPMethod:@"HEAD"];
+	[request setURL:url];
+
+	NSError *error = nil;
+	NSHTTPURLResponse *callbackResponseCode = nil;
+
+	NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
+	return [callbackResponseCode statusCode] == 200;
+}
+
 - (id) initWithOptions:(NSDictionary *) opts commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString*) callbackId {
 	if (![super init])
 		return nil;
@@ -126,18 +138,6 @@
 		: [[NSDate date] timeIntervalSinceDate: uploadStartTime];
 
 	[self onUploadComplete: clientUploadSeconds];
-}
-
-- (bool) doesFileExistsAtUrl:(NSURL*) url {
-	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
-	[request setHTTPMethod:@"HEAD"];
-	[request setURL:url];
-
-	NSError *error = nil;
-	NSHTTPURLResponse *callbackResponseCode = nil;
-
-	NSData *oResponseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&callbackResponseCode error:&error];
-	return [callbackResponseCode statusCode] == 200;
 }
 
 - (void) onUploadComplete: (NSTimeInterval) clientUploadSeconds {
