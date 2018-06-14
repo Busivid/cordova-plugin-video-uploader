@@ -10,29 +10,29 @@
 #import "VideoUploader.h"
 
 @implementation VideoUploader {
-	UIBackgroundTaskIdentifier backgroundTaskID;
-	NSString *latestCallbackId;
-	NSObject *transcodeCallbackLock;
-	NSOperationQueue *transcodingQueue;
-	NSOperationQueue *uploadQueue;
+	UI_backgroundTaskIdentifier _backgroundTaskId;
+	NSString *_latestCallbackId;
+	NSObject *_transcodeCallbackLock;
+	NSOperationQueue *_transcodeQueue;
+	NSOperationQueue *_uploadQueue;
 }
 
 @synthesize completedUploads;
 
 - (void) abort:(CDVInvokedUrlCommand*) cmd {
-	[transcodingQueue cancelAllOperations];
-	[uploadQueue cancelAllOperations];
-	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:latestCallbackId];
+	[_transcodeQueue cancelAllOperations];
+	[_uploadQueue cancelAllOperations];
+	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:_latestCallbackId];
 }
 
 - (void) applicationDidEnterBackground:(UIApplication *) application {
 	NSLog(@"[VideoUploader]: applicationDidEnterBackground called");
 
 	// if stuff in queues, request a background task.
-	if ([transcodingQueue operationCount] > 0 || [uploadQueue operationCount] > 0) {
-		backgroundTaskID = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+	if ([_transcodeQueue operationCount] > 0 || [_uploadQueue operationCount] > 0) {
+		_backgroundTaskId = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
 			NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
-			[self handleFatalError:errorMessage withCallbackId:latestCallbackId];
+			[self handleFatalError:errorMessage withCallbackId:_latestCallbackId];
 			[self removeBackgroundTask];
 		}];
 	}
@@ -75,7 +75,7 @@
 	NSLog(@"[VideoUploader]: compressAndUpload called");
 
 	completedUploads = [[NSMutableArray alloc] init];
-	latestCallbackId = cmd.callbackId;
+	_latestCallbackId = cmd.callbackId;
 
 	[self.commandDelegate runInBackground:^{
 		NSArray *fileOptions = [cmd.arguments objectAtIndex:0];
@@ -85,7 +85,7 @@
 			// Find a temporary path for transcoding.
 			NSString *transcodingDstFilePath = [self getTempTranscodingFile:progressId];
 			if (transcodingDstFilePath == nil) {
-				[self handleFatalError:@"Unable to create output folder for compression." withCallbackId:latestCallbackId];
+				[self handleFatalError:@"Unable to create output folder for compression." withCallbackId:_latestCallbackId];
 				return;
 			}
 
@@ -107,8 +107,8 @@
 
 			NSURL *uploadUrl = [NSURL URLWithString:options[@"uploadUrl"]];
 
-			// Initialise UploadOperation which is added to UploadQueue on completetionBlock of transcoding operation
-			UploadOperation *uploadOperation = [[UploadOperation alloc] initWithOptions:options commandDelegate:self.commandDelegate cordovaCallbackId:latestCallbackId];
+			// Initialise UploadOperation which is added to _uploadQueue on completetionBlock of transcoding operation
+			UploadOperation *uploadOperation = [[UploadOperation alloc] initWithOptions:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
 			[uploadOperation setTarget:uploadUrl];
 			[uploadOperation setUploadCompleteUrl:uploadCompleteUrl];
 			[uploadOperation setUploadCompleteUrlAuthorization:uploadCompleteUrlAuthorization];
@@ -118,7 +118,7 @@
 			__weak UploadOperation *weakUpload = uploadOperation;
 			[weakUpload setCompletionBlock:^{
 				if (weakUpload.errorMessage != nil) {
-					[self handleFatalError:weakUpload.errorMessage withCallbackId:latestCallbackId];
+					[self handleFatalError:weakUpload.errorMessage withCallbackId:_latestCallbackId];
 					return;
 				}
 
@@ -128,36 +128,36 @@
 				[completedUploads addObject:progressId];
 
 				// Notify cordova a single upload is complete
-				[self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_UPLOADED"];
+				[self reportProgress:_latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_UPLOADED"];
 
-				if ([transcodingQueue operationCount] == 0 && [uploadQueue operationCount] == 0) {
+				if ([_transcodeQueue operationCount] == 0 && [_uploadQueue operationCount] == 0) {
 					NSLog(@"[Done]");
 
 					// Notify cordova all operations are complete
-					[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:latestCallbackId];
+					[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:_latestCallbackId];
 					[self removeBackgroundTask];
 				}
 			}];
 
 			// Initialise TranscodeOperation which is added immediately to queue.
-			TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithFilePath:transcodingSrc dst:transcodingDst options:options commandDelegate:self.commandDelegate cordovaCallbackId:latestCallbackId];
+			TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithFilePath:transcodingSrc dst:transcodingDst options:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
 			__weak TranscodeOperation* weakTranscodeOperation = transcodeOperation;
 			[transcodeOperation setCompletionBlock:^{
 				// Mutex lock to fix race conditions.
 				// If two task have already been transcoded, therefore return instantly, the UploadOperations can be added out of order and looks confusing on the UI.
-				@synchronized (transcodeCallbackLock) {
+				@synchronized (_transcodeCallbackLock) {
 					if (weakTranscodeOperation.isCancelled)
 						return;
 
 					if (weakTranscodeOperation.errorMessage != nil) {
 						// Notify cordova a single transcode errored.
-						[self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_TRANSCODING_ERROR"];
+						[self reportProgress:_latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_TRANSCODING_ERROR"];
 
 						// Transcoded failed, use original file in upload
 						[uploadOperation setSource:transcodingSrc];
 					} else {
 						// Notify cordova a single transcode is complete
-						[self reportProgress:latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_TRANSCODED"];
+						[self reportProgress:_latestCallbackId progress:[NSNumber numberWithInt:100] progressId:progressId type:@"PROGRESS_TRANSCODED"];
 
 						NSFileManager *fileMgr = [NSFileManager defaultManager];
 						unsigned long long transcodingDstFileSize = [[fileMgr attributesOfItemAtPath:transcodingDst.path error:nil] fileSize];
@@ -173,11 +173,11 @@
 					}
 
 					// Add uploading to queue
-					[uploadQueue addOperation:uploadOperation];
+					[_uploadQueue addOperation:uploadOperation];
 				}
 			}];
 
-			[transcodingQueue addOperation:transcodeOperation];
+			[_transcodeQueue addOperation:transcodeOperation];
 		}
 	}];
 }
@@ -203,8 +203,8 @@
 	[results setObject:message forKey:@"message"];
 	[results setObject:completedUploads forKey:@"completedUploads"];
 
-	[transcodingQueue cancelAllOperations];
-	[uploadQueue cancelAllOperations];
+	[_transcodeQueue cancelAllOperations];
+	[_uploadQueue cancelAllOperations];
 	if ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) {
 
 		// If we are in the background, display the error message as a local push notification
@@ -225,21 +225,21 @@
 - (void) pluginInitialize {
 	NSLog(@"[VideoUploader]: pluginInitalize called");
 
-	backgroundTaskID = UIBackgroundTaskInvalid;
+	_backgroundTaskId = UIBackgroundTaskInvalid;
 
-	transcodingQueue = [[NSOperationQueue alloc] init];
-	transcodingQueue.maxConcurrentOperationCount = 1;
+	_transcodeQueue = [[NSOperationQueue alloc] init];
+	_transcodeQueue.maxConcurrentOperationCount = 1;
 
-	uploadQueue = [[NSOperationQueue alloc] init];
-	uploadQueue.maxConcurrentOperationCount = 1;
+	_uploadQueue = [[NSOperationQueue alloc] init];
+	_uploadQueue.maxConcurrentOperationCount = 1;
 }
 
 - (void) removeBackgroundTask {
 	NSLog(@"[VideoUploader]: removeBackgroundTask called");
 
-	if (backgroundTaskID != UIBackgroundTaskInvalid) {
-		[[UIApplication sharedApplication] endBackgroundTask:backgroundTaskID];
-		backgroundTaskID = UIBackgroundTaskInvalid;
+	if (_backgroundTaskId != UIBackgroundTaskInvalid) {
+		[[UIApplication sharedApplication] endBackgroundTask:_backgroundTaskId];
+		_backgroundTaskId = UIBackgroundTaskInvalid;
 	}
 }
 
