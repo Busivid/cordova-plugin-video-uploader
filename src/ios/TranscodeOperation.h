@@ -2,16 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <Cordova/CDV.h>
 
-@interface TranscodeOperation : NSOperation {
-	id <CDVCommandDelegate> __weak commandDelegate;
-	NSString *cordovaCallbackId;
-	NSURL *dstPath;
-	AVAssetExportSession *exportSession;
-	NSString *progressId;
-	NSURL *srcPath;
-	NSNumber *videoDuration;
-	NSNumber *width;
-}
+@interface TranscodeOperation : NSOperation
 
 @property (nonatomic, weak) id <CDVCommandDelegate> commandDelegate;
 @property (retain) NSString *errorMessage;

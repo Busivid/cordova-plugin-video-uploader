@@ -6,14 +6,14 @@
 
 #import <Cordova/CDV.h>
 
-@interface VideoUploader : CDVPlugin {
-}
+@interface VideoUploader : CDVPlugin
 
 @property (copy) NSMutableArray *completedUploads;
 
-- (void) abort:(CDVInvokedUrlCommand*)command;
+- (void) abort:(CDVInvokedUrlCommand *)command;
 - (void) applicationDidEnterBackground:(UIApplication *)application;
 - (void) applicationWillEnterForeground:(UIApplication *)application;
-- (void) cleanUp:(CDVInvokedUrlCommand*)command;
-- (void) compressAndUpload:(CDVInvokedUrlCommand*)command;
+- (void) cleanUp:(CDVInvokedUrlCommand *)command;
+- (void) compressAndUpload:(CDVInvokedUrlCommand *)command;
+
 @end

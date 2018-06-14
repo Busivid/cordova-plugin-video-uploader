@@ -3,6 +3,13 @@
 
 @implementation UploadOperation {
 	NSMutableDictionary *_uploadCompleteUrlFields;
+
+	id <CDVCommandDelegate> __weak commandDelegate;
+	NSString *cordovaCallbackId;
+	CDVFileTransfer *fileTransfer;
+	NSDictionary *options;
+	NSURL *source;
+	NSURL *target;
 }
 
 @synthesize errorMessage;
@@ -29,7 +36,7 @@
 	}
 }
 
-- (bool) doesFileExistsAtUrl:(NSURL*) url {
+- (bool) doesFileExistsAtUrl:(NSURL *) url {
 	NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
 	[request setHTTPMethod:@"HEAD"];
 	[request setURL:url];
@@ -41,7 +48,7 @@
 	return [callbackResponseCode statusCode] == 200;
 }
 
-- (id) initWithOptions:(NSDictionary *) opts commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString*) callbackId {
+- (id) initWithOptions:(NSDictionary *) opts commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString *) callbackId {
 	if (![super init])
 		return nil;
 
@@ -110,11 +117,11 @@
 		[args addObject:offset];
 		[args addObject:[NSNumber numberWithInt:chunkSize]];
 
-		CDVInvokedUrlCommand* commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
+		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
 		dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
 
-		UploadOperationCommandDelegate* delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate progressId:options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
-		[delegate setCompletionBlock:^(NSString* errorMsg){
+		UploadOperationCommandDelegate *delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:commandDelegate progressId:options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
+		[delegate setCompletionBlock:^(NSString *errorMsg){
 			errorMessage = errorMsg;
 			dispatch_semaphore_signal(sessionWaitSemaphore);
 		}];
@@ -157,7 +164,7 @@
 			if ([uploadCompleteUrlMethod isEqualToString:@"GET"]) {
 				// Add parameters to URL
 				NSURLComponents *url = [[NSURLComponents alloc] initWithURL:request.URL resolvingAgainstBaseURL:YES];
-				NSArray<NSURLQueryItem*> *queryItems = [url queryItems];
+				NSArray<NSURLQueryItem *> *queryItems = [url queryItems];
 
 				NSURLQueryItem *queryItem = [NSURLQueryItem queryItemWithName: @"ClientUploadSeconds" value: [@(ceil(clientUploadSeconds)) stringValue]];
 				queryItems = [queryItems arrayByAddingObject: queryItem];

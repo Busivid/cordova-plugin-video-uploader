@@ -2,7 +2,16 @@
 #import <Foundation/Foundation.h>
 #import "TranscodeOperation.h"
 
-@implementation TranscodeOperation
+@implementation TranscodeOperation {
+	id <CDVCommandDelegate> __weak commandDelegate;
+	NSString *cordovaCallbackId;
+	NSURL *dstPath;
+	AVAssetExportSession *exportSession;
+	NSString *progressId;
+	NSURL *srcPath;
+	NSNumber *videoDuration;
+	NSNumber *width;
+}
 
 @synthesize commandDelegate;
 @synthesize errorMessage;
@@ -14,7 +23,7 @@
 	}
 }
 
-- (id) initWithFilePath:(NSURL*) src dst:(NSURL*) dst options:(NSDictionary *) options commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString*) callbackId
+- (id) initWithFilePath:(NSURL *) src dst:(NSURL *) dst options:(NSDictionary *) options commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString *) callbackId
 {
 	if (![super init])
 		return nil;
@@ -116,7 +125,7 @@
 }
 
 // Forwards progress up to Javascript.
-- (void) reportProgress:(NSNumber*) progress {
+- (void) reportProgress:(NSNumber *) progress {
 	NSLog(@"%@", [NSString stringWithFormat:@"AVAssetExport running progress=%3.2f%%", [progress doubleValue]]);
 
 	if (self.commandDelegate != nil && cordovaCallbackId != nil) {
@@ -125,7 +134,7 @@
 		[dictionary setValue: progressId forKey: @"progressId"];
 		[dictionary setValue: @"PROGRESS_TRANSCODING" forKey: @"type"];
 
-		CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
+		CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
 
 		[result setKeepCallbackAsBool:YES];
 		[self.commandDelegate sendPluginResult:result callbackId:cordovaCallbackId];

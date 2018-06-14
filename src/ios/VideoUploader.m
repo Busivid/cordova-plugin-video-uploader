@@ -10,7 +10,7 @@
 #import "VideoUploader.h"
 
 @implementation VideoUploader {
-	UI_backgroundTaskIdentifier _backgroundTaskId;
+	UIBackgroundTaskIdentifier _backgroundTaskId;
 	NSString *_latestCallbackId;
 	NSObject *_transcodeCallbackLock;
 	NSOperationQueue *_transcodeQueue;
@@ -19,7 +19,7 @@
 
 @synthesize completedUploads;
 
-- (void) abort:(CDVInvokedUrlCommand*) cmd {
+- (void) abort:(CDVInvokedUrlCommand *) cmd {
 	[_transcodeQueue cancelAllOperations];
 	[_uploadQueue cancelAllOperations];
 	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:_latestCallbackId];
@@ -31,20 +31,20 @@
 	// if stuff in queues, request a background task.
 	if ([_transcodeQueue operationCount] > 0 || [_uploadQueue operationCount] > 0) {
 		_backgroundTaskId = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-			NSString* errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
+			NSString *errorMessage = @"Application was running too long in the background and iOS cancelled uploading. Please try again.";
 			[self handleFatalError:errorMessage withCallbackId:_latestCallbackId];
 			[self removeBackgroundTask];
 		}];
 	}
 }
 
-- (void) applicationWillEnterForeground:(UIApplication*) application {
+- (void) applicationWillEnterForeground:(UIApplication *) application {
 	NSLog(@"[VideoUploader]: applicationWillEnterForeground called");
 
 	[self removeBackgroundTask];
 }
 
-- (void) cleanUp:(CDVInvokedUrlCommand*) cmd {
+- (void) cleanUp:(CDVInvokedUrlCommand *) cmd {
 	NSLog(@"[VideoUploader]: cleanUp called");
 
 	[self.commandDelegate runInBackground:^{
@@ -71,7 +71,7 @@
 	}];
 }
 
-- (void) compressAndUpload:(CDVInvokedUrlCommand*) cmd {
+- (void) compressAndUpload:(CDVInvokedUrlCommand *) cmd {
 	NSLog(@"[VideoUploader]: compressAndUpload called");
 
 	completedUploads = [[NSMutableArray alloc] init];
@@ -141,7 +141,8 @@
 
 			// Initialise TranscodeOperation which is added immediately to queue.
 			TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithFilePath:transcodingSrc dst:transcodingDst options:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
-			__weak TranscodeOperation* weakTranscodeOperation = transcodeOperation;
+
+			__weak TranscodeOperation *weakTranscodeOperation = transcodeOperation;
 			[transcodeOperation setCompletionBlock:^{
 				// Mutex lock to fix race conditions.
 				// If two task have already been transcoded, therefore return instantly, the UploadOperations can be added out of order and looks confusing on the UI.
@@ -182,7 +183,7 @@
 	}];
 }
 
-- (NSString*) getTempTranscodingFile:(NSString*) progressId {
+- (NSString *) getTempTranscodingFile:(NSString *) progressId {
 	// Ensure the cache directory exists.
 	NSFileManager *fileMgr = [NSFileManager defaultManager];
 	NSString *cacheDir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) objectAtIndex:0];
@@ -196,7 +197,7 @@
 	return videoOutput;
 }
 
-- (void) handleFatalError:(NSString*) message withCallbackId:(NSString*) callbackId {
+- (void) handleFatalError:(NSString *) message withCallbackId:(NSString *) callbackId {
 	NSLog(@"[VideoUploader]: handleFatalError called");
 
 	NSMutableDictionary *results = [NSMutableDictionary dictionaryWithCapacity:2];
@@ -210,11 +211,10 @@
 		// If we are in the background, display the error message as a local push notification
 		UILocalNotification *notification = [[UILocalNotification alloc]init];
 		notification.alertAction = nil;
-		notification.soundName = UILocalNotificationDefaultSoundName;
 		notification.alertBody = message;
-		notification.soundName = UILocalNotificationDefaultSoundName;
 		notification.fireDate = [NSDate dateWithTimeIntervalSinceNow:5];
 		notification.repeatInterval = 0;
+		notification.soundName = UILocalNotificationDefaultSoundName;
 
 		[[UIApplication sharedApplication]scheduleLocalNotification:notification];
 	}
@@ -243,12 +243,12 @@
 	}
 }
 
-- (void) reportProgress:(NSString*) callbackId progress:(NSNumber*) progress progressId:(NSString*) progressId type:(NSString*) type {
+- (void) reportProgress:(NSString *) callbackId progress:(NSNumber *) progress progressId:(NSString *) progressId type:(NSString *) type {
 	NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
 	[dictionary setValue: progress forKey: @"progress"];
 	[dictionary setValue: progressId forKey: @"progressId"];
 	[dictionary setValue: type forKey: @"type"];
-	CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
+	CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
 	[result setKeepCallbackAsBool:YES];
 	[self.commandDelegate sendPluginResult:result callbackId:callbackId];
 }

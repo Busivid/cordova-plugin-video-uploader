@@ -1,11 +1,30 @@
 #import "UploadOperationCommandDelegate.h"
 
-@implementation UploadOperationCommandDelegate
+@implementation UploadOperationCommandDelegate {
+	CDVCommandDelegateImpl *commandDelegate;
+	NSNumber *lastReportedProgress;
+	NSNumber *offset;
+	NSString *progressId;
+	NSNumber *totalBytes;
+}
+
 @synthesize completionBlock;
 @synthesize settings;
 @synthesize urlTransformer;
 
-- (id) initWithCommandDelegateImpl:(CDVCommandDelegateImpl*) commandDelegateImpl progressId:(NSString*) pId offset:(NSNumber*) oBytes totalBytes:(NSNumber *) tBytes {
+- (void) evalJs:(NSString *)js {
+	return [commandDelegate evalJs:js];
+}
+
+- (void) evalJs:(NSString *)js scheduledOnRunLoop:(BOOL)scheduledOnRunLoop {
+	return [commandDelegate evalJs:js scheduledOnRunLoop:scheduledOnRunLoop];
+}
+
+- (id) getCommandInstance:(NSString *)pluginName {
+	return [commandDelegate getCommandInstance:pluginName];
+}
+
+- (id) initWithCommandDelegateImpl:(CDVCommandDelegateImpl *) commandDelegateImpl progressId:(NSString *) pId offset:(NSNumber *) oBytes totalBytes:(NSNumber *) tBytes {
 	commandDelegate = commandDelegateImpl;
 	progressId = pId;
 	offset = oBytes;
@@ -13,20 +32,16 @@
 	return [super init];
 }
 
-- (void) setCompletionBlock:(void(^)(NSString* errorMessage))block {
-	completionBlock = block;
-}
-
-- (NSString*)pathForResource:(NSString*)resourcepath {
+- (NSString *) pathForResource:(NSString *)resourcepath {
 	return [commandDelegate pathForResource:resourcepath];
 }
 
-- (id) getCommandInstance:(NSString*)pluginName {
-	return [commandDelegate getCommandInstance:pluginName];
+- (void) runInBackground:(void (^)())block {
+	return [commandDelegate runInBackground:block];
 }
 
-- (void) sendPluginResult:(CDVPluginResult*)result callbackId:(NSString*)callbackId {
-	NSDictionary *messages = (NSDictionary*)result.message;
+- (void) sendPluginResult:(CDVPluginResult *)result callbackId:(NSString *)callbackId {
+	NSDictionary *messages = (NSDictionary *) result.message;
 
 	if ([messages objectForKey:@"lengthComputable"] == nil) {
 		NSString *errorMessage;
@@ -56,20 +71,11 @@
 	}
 }
 
-// Evaluates the given JS. This is thread-safe.
-- (void) evalJs:(NSString*)js {
-	return [commandDelegate evalJs:js];
+- (void) setCompletionBlock:(void(^)(NSString *errorMessage))block {
+	completionBlock = block;
 }
 
-- (void) evalJs:(NSString*)js scheduledOnRunLoop:(BOOL)scheduledOnRunLoop {
-	return [commandDelegate evalJs:js scheduledOnRunLoop:scheduledOnRunLoop];
-}
-
-- (void) runInBackground:(void (^)())block {
-	return [commandDelegate runInBackground:block];
-}
-
-- (NSString*) userAgent {
+- (NSString *) userAgent {
 	return [commandDelegate userAgent];
 }
 

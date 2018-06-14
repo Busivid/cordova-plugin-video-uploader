@@ -3,14 +3,7 @@
 #import "CDVFileTransfer.h"
 #import "TranscodeOperation.h"
 
-@interface UploadOperation : NSOperation {
-	id <CDVCommandDelegate> __weak commandDelegate;
-	NSString *cordovaCallbackId;
-	CDVFileTransfer *fileTransfer;
-	NSDictionary *options;
-	NSURL *source;
-	NSURL *target;
-}
+@interface UploadOperation : NSOperation
 
 @property (retain) NSString *errorMessage;
 @property (retain) NSURL *source;
@@ -21,6 +14,6 @@
 
 - (void) addUploadCompleteUrlFields:(NSDictionary *) dict;
 - (void) cancel;
-- (id) initWithOptions:(NSDictionary *) opts commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString*) callbackId;
+- (id) initWithOptions:(NSDictionary *) opts commandDelegate:(id <CDVCommandDelegate>) cmdDelegate cordovaCallbackId:(NSString *) callbackId;
 - (void) main;
 @end
