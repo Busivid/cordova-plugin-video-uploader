@@ -1,15 +1,13 @@
 //
-//  VideoUploader.m
-//
 //  Created by Cory Thompson on 2017-06-16
 //
 
 #import <Cordova/CDV.h>
-#import "UploadOperation.h"
-#import "TranscodeOperation.h"
-#import "VideoUploader.h"
+#import "BVUploadOperation.h"
+#import "BVTranscodeOperation.h"
+#import "BVVideoUploader.h"
 
-@implementation VideoUploader {
+@implementation BVVideoUploader {
 	UIBackgroundTaskIdentifier _backgroundTaskId;
 	NSString *_latestCallbackId;
 	NSObject *_transcodeCallbackLock;
@@ -26,7 +24,7 @@
 }
 
 - (void) applicationDidEnterBackground:(UIApplication *) application {
-	NSLog(@"[VideoUploader]: applicationDidEnterBackground called");
+	NSLog(@"[BVVideoUploader]: applicationDidEnterBackground called");
 
 	// if stuff in queues, request a background task.
 	if ([_transcodeQueue operationCount] > 0 || [_uploadQueue operationCount] > 0) {
@@ -39,13 +37,13 @@
 }
 
 - (void) applicationWillEnterForeground:(UIApplication *) application {
-	NSLog(@"[VideoUploader]: applicationWillEnterForeground called");
+	NSLog(@"[BVVideoUploader]: applicationWillEnterForeground called");
 
 	[self removeBackgroundTask];
 }
 
 - (void) cleanUp:(CDVInvokedUrlCommand *) cmd {
-	NSLog(@"[VideoUploader]: cleanUp called");
+	NSLog(@"[BVBVVideoUploader]: cleanUp called");
 
 	[self.commandDelegate runInBackground:^{
 		NSFileManager *fileMgr = [NSFileManager defaultManager];
@@ -72,7 +70,7 @@
 }
 
 - (void) compressAndUpload:(CDVInvokedUrlCommand *) cmd {
-	NSLog(@"[VideoUploader]: compressAndUpload called");
+	NSLog(@"[BVVideoUploader]: compressAndUpload called");
 
 	completedUploads = [[NSMutableArray alloc] init];
 	_latestCallbackId = cmd.callbackId;
@@ -108,7 +106,7 @@
 			NSURL *uploadUrl = [NSURL URLWithString:options[@"uploadUrl"]];
 
 			// Initialise UploadOperation which is added to _uploadQueue on completetionBlock of transcoding operation
-			UploadOperation *uploadOperation = [[UploadOperation alloc] initWithOptions:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
+			BVUploadOperation *uploadOperation = [[BVUploadOperation alloc] initWithOptions:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
 			[uploadOperation setTarget:uploadUrl];
 			[uploadOperation setUploadCompleteUrl:uploadCompleteUrl];
 			[uploadOperation setUploadCompleteUrlAuthorization:uploadCompleteUrlAuthorization];
@@ -116,7 +114,7 @@
 
 			[uploadOperation addUploadCompleteUrlFields:uploadCompleteUrlFields];
 
-			__weak UploadOperation *weakUpload = uploadOperation;
+			__weak BVUploadOperation *weakUpload = uploadOperation;
 			[weakUpload setCompletionBlock:^{
 				if (weakUpload.errorMessage != nil) {
 					[self handleFatalError:weakUpload.errorMessage withCallbackId:_latestCallbackId];
@@ -141,9 +139,9 @@
 			}];
 
 			// Initialise TranscodeOperation which is added immediately to queue.
-			TranscodeOperation *transcodeOperation = [[TranscodeOperation alloc] initWithFilePath:transcodingSrc dst:transcodingDst options:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
+			BVTranscodeOperation *transcodeOperation = [[BVTranscodeOperation alloc] initWithFilePath:transcodingSrc dst:transcodingDst options:options commandDelegate:self.commandDelegate cordovaCallbackId:_latestCallbackId];
 
-			__weak TranscodeOperation *weakTranscodeOperation = transcodeOperation;
+			__weak BVTranscodeOperation *weakTranscodeOperation = transcodeOperation;
 			[transcodeOperation setCompletionBlock:^{
 				// Mutex lock to fix race conditions.
 				// If two task have already been transcoded, therefore return instantly, the UploadOperations can be added out of order and looks confusing on the UI.
@@ -199,7 +197,7 @@
 }
 
 - (void) handleFatalError:(NSString *) message withCallbackId:(NSString *) callbackId {
-	NSLog(@"[VideoUploader]: handleFatalError called");
+	NSLog(@"[BVVideoUploader]: handleFatalError called");
 
 	NSMutableDictionary *results = [NSMutableDictionary dictionaryWithCapacity:2];
 	[results setObject:message forKey:@"message"];
@@ -224,7 +222,7 @@
 }
 
 - (void) pluginInitialize {
-	NSLog(@"[VideoUploader]: pluginInitalize called");
+	NSLog(@"[BVVideoUploader]: pluginInitalize called");
 
 	_backgroundTaskId = UIBackgroundTaskInvalid;
 
@@ -236,7 +234,7 @@
 }
 
 - (void) removeBackgroundTask {
-	NSLog(@"[VideoUploader]: removeBackgroundTask called");
+	NSLog(@"[BVVideoUploader]: removeBackgroundTask called");
 
 	if (_backgroundTaskId != UIBackgroundTaskInvalid) {
 		[[UIApplication sharedApplication] endBackgroundTask:_backgroundTaskId];

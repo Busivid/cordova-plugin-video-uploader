@@ -1,6 +1,6 @@
-#import "UploadOperationCommandDelegate.h"
+#import "BVUploadOperationCommandDelegate.h"
 
-@implementation UploadOperationCommandDelegate {
+@implementation BVUploadOperationCommandDelegate {
 	CDVCommandDelegateImpl *commandDelegate;
 	NSNumber *lastReportedProgress;
 	NSNumber *offset;

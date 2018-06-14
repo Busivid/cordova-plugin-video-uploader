@@ -10,7 +10,7 @@ Performs the following steps
 
 ## Installation
 
-    cordova plugin add http://git.busivid.com/root/cordova-plugin-video-uploader.git
+    cordova plugin add https://github.com/Busivid/cordova-plugin-video-uploader.git
 
 ## Usage
 
@@ -44,7 +44,8 @@ Performs the following steps
     };
 
     var options = [
-      upload1
+      upload1,
+      upload2,
     ];
 
     cordova.plugins.VideoUploader.compressAndUpload(options, success, progress, error)

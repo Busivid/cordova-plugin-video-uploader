@@ -32,25 +32,25 @@
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
             <feature name="VideoUploader">
-                <param name="ios-package" value="VideoUploader"/>
+                <param name="ios-package" value="BVVideoUploader"/>
             </feature>
         </config-file>
 
         <dependency id="cordova-plugin-file-transfer" url="https://github.com/Busivid/cordova-plugin-file-transfer" />
 
-        <header-file src="src/ios/AppDelegate+uploader.h" />
-        <source-file src="src/ios/AppDelegate+uploader.m" />
+        <header-file src="src/ios/AppDelegate_VideoUploader.h" />
+        <source-file src="src/ios/AppDelegate_VideoUploader.m" />
 
-        <header-file src="src/ios/TranscodeOperation.h" />
-        <source-file src="src/ios/TranscodeOperation.m" />
+        <header-file src="src/ios/BVTranscodeOperation.h" />
+        <source-file src="src/ios/BVTranscodeOperation.m" />
 
-        <header-file src="src/ios/UploadOperation.h" />
-        <source-file src="src/ios/UploadOperation.m" />
+        <header-file src="src/ios/BVUploadOperation.h" />
+        <source-file src="src/ios/BVUploadOperation.m" />
 
-        <header-file src="src/ios/UploadOperationCommandDelegate.h" />
-        <source-file src="src/ios/UploadOperationCommandDelegate.m" />
+        <header-file src="src/ios/BVUploadOperationCommandDelegate.h" />
+        <source-file src="src/ios/BVUploadOperationCommandDelegate.m" />
 
-        <header-file src="src/ios/VideoUploader.h" />
-        <source-file src="src/ios/VideoUploader.m" />
+        <header-file src="src/ios/BVVideoUploader.h" />
+        <source-file src="src/ios/BVVideoUploader.m" />
     </platform>
 </plugin>

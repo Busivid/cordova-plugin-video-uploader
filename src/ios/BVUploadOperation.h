@@ -1,9 +1,9 @@
 #import <Cordova/CDV.h>
 #import "CDVFile.h"
 #import "CDVFileTransfer.h"
-#import "TranscodeOperation.h"
+#import "BVTranscodeOperation.h"
 
-@interface UploadOperation : NSOperation
+@interface BVUploadOperation : NSOperation
 
 @property (readonly) NSString *errorMessage;
 @property (copy) NSURL *source;

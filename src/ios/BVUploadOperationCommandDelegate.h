@@ -1,7 +1,7 @@
 #import <Cordova/CDVCommandDelegateImpl.h>
 #import <Cordova/CDV.h>
 
-@interface UploadOperationCommandDelegate:NSObject<CDVCommandDelegate>
+@interface BVUploadOperationCommandDelegate:NSObject<CDVCommandDelegate>
 
 @property (nonatomic, copy) void (^completionBlock)(NSString *errorMessage);
 

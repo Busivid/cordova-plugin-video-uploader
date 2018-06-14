@@ -1,8 +1,8 @@
 #import <AVFoundation/AVFoundation.h>
 #import <Foundation/Foundation.h>
-#import "TranscodeOperation.h"
+#import "BVTranscodeOperation.h"
 
-@implementation TranscodeOperation {
+@implementation BVTranscodeOperation {
 	id <CDVCommandDelegate> __weak _commandDelegate;
 	NSString *_cordovaCallbackId;
 	NSURL *_dstPath;
@@ -38,8 +38,8 @@
 }
 
 - (void) main {
-	NSLog(@"[TranscodeOperation]: inputFilePath: %@", _srcPath);
-	NSLog(@"[TranscodeOperation]: outputPath: %@", _dstPath);
+	NSLog(@"[BVTranscodeOperation]: inputFilePath: %@", _srcPath);
+	NSLog(@"[BVTranscodeOperation]: outputPath: %@", _dstPath);
 
 	if (self.isCancelled)
 		return;
@@ -98,20 +98,20 @@
 
 	switch ([exportSession status]) {
 		case AVAssetExportSessionStatusCompleted:
-			NSLog(@"[TranscodeOperation]: Export Complete %ld %@", (long)exportSession.status, exportSession.error);
+			NSLog(@"[BVTranscodeOperation]: Export Complete %ld %@", (long)exportSession.status, exportSession.error);
 			break;
 
 		case AVAssetExportSessionStatusFailed:
-			NSLog(@"[TranscodeOperation]: Export failed: %@", [[exportSession error] localizedDescription]);
+			NSLog(@"[BVTranscodeOperation]: Export failed: %@", [[exportSession error] localizedDescription]);
 			errorMessage = [[exportSession error] localizedDescription];
 			 break;
 
 		case AVAssetExportSessionStatusCancelled:
-			NSLog(@"[TranscodeOperation]: Export canceled");
+			NSLog(@"[BVTranscodeOperation]: Export canceled");
 			break;
 
 		default:
-			NSLog(@"[TranscodeOperation]: Export default in switch");
+			NSLog(@"[BVTranscodeOperation]: Export default in switch");
 			break;
 	}
 }

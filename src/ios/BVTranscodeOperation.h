@@ -2,7 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <Cordova/CDV.h>
 
-@interface TranscodeOperation : NSOperation
+@interface BVTranscodeOperation : NSOperation
 
 @property (readonly) NSString *errorMessage;
 

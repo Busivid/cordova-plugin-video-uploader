@@ -1,7 +1,7 @@
-#import "UploadOperation.h"
-#import "UploadOperationCommandDelegate.h"
+#import "BVUploadOperation.h"
+#import "BVUploadOperationCommandDelegate.h"
 
-@implementation UploadOperation {
+@implementation BVUploadOperation {
 	NSMutableDictionary *_uploadCompleteUrlFields;
 
 	id <CDVCommandDelegate> __weak _commandDelegate;
@@ -118,7 +118,7 @@
 		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:_cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
 		dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
 
-		UploadOperationCommandDelegate *delegate = [[UploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:_commandDelegate progressId:_options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
+		BVUploadOperationCommandDelegate *delegate = [[BVUploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:_commandDelegate progressId:_options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
 		[delegate setCompletionBlock:^(NSString *errorMsg){
 			errorMessage = errorMsg;
 			dispatch_semaphore_signal(sessionWaitSemaphore);

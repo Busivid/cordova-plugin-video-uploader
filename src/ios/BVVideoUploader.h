@@ -1,12 +1,10 @@
 //
-//  VideoUploader.h
-//
 //  Created by Cory Thompson on 2017-06-16
 //
 
 #import <Cordova/CDV.h>
 
-@interface VideoUploader : CDVPlugin
+@interface BVVideoUploader : CDVPlugin
 
 @property (readonly) NSMutableArray *completedUploads;
 
