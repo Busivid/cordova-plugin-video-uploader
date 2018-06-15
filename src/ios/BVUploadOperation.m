@@ -11,6 +11,7 @@
 }
 
 @synthesize errorMessage;
+@synthesize progressId;
 @synthesize source;
 @synthesize target;
 @synthesize uploadCompleteUrl;
@@ -27,7 +28,7 @@
 	// Call abort on current file transfer
 	if (_fileTransfer != nil) {
 		NSMutableArray *args = [[NSMutableArray alloc] init];
-		[args addObject:_options[@"progressId"]];
+		[args addObject:progressId];
 
 		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:_cordovaCallbackId className:@"CDVFileTransfer" methodName:@"abort"];
 		[_fileTransfer abort:commandOptions];
@@ -53,6 +54,7 @@
 	_cordovaCallbackId = callbackId;
 	_commandDelegate = delegate;
 	_options = options;
+	progressId = options[@"progressId"];
 
 	_fileTransfer = [[CDVFileTransfer alloc] init];
 	[_fileTransfer pluginInitialize];
@@ -109,7 +111,7 @@
 		[args addObject:[NSNumber numberWithInt:0]]	;
 		[args addObject:[NSNumber numberWithInt:1]];
 		[args addObject:headers];
-		[args addObject:_options[@"progressId"]];
+		[args addObject:progressId];
 		[args addObject:@"POST"];
 		[args addObject:_options[@"timeout"]];
 		[args addObject:offset];
@@ -118,7 +120,7 @@
 		CDVInvokedUrlCommand *commandOptions = [[CDVInvokedUrlCommand alloc] initWithArguments:args callbackId:_cordovaCallbackId className:@"CDVFileTransfer" methodName:@"upload"];
 		dispatch_semaphore_t sessionWaitSemaphore = dispatch_semaphore_create(0);
 
-		BVUploadOperationCommandDelegate *delegate = [[BVUploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:_commandDelegate progressId:_options[@"progressId"] offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
+		BVUploadOperationCommandDelegate *delegate = [[BVUploadOperationCommandDelegate alloc] initWithCommandDelegateImpl:_commandDelegate progressId:progressId offset:offset totalBytes:[NSNumber numberWithLong:fileSize]];
 		[delegate setCompletionBlock:^(NSString *errorMsg){
 			errorMessage = errorMsg;
 			dispatch_semaphore_signal(sessionWaitSemaphore);

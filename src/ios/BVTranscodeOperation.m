@@ -7,12 +7,12 @@
 	NSString *_cordovaCallbackId;
 	NSURL *_dstPath;
 	AVAssetExportSession *exportSession;
-	NSString *_progressId;
 	NSURL *_srcPath;
 	NSNumber *_videoDuration;
 }
 
 @synthesize errorMessage;
+@synthesize progressId;
 
 - (void) cancel {
 	[super cancel];
@@ -30,7 +30,7 @@
 	_commandDelegate = delegate;
 	_cordovaCallbackId = callbackId;
 	_dstPath = dst;
-	_progressId = options[@"progressId"];
+	progressId = options[@"progressId"];
 	_srcPath = src;
 	_videoDuration = options[@"maxSeconds"];
 
@@ -123,7 +123,7 @@
 	if (_commandDelegate != nil && _cordovaCallbackId != nil) {
 		NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
 		[dictionary setValue: progress forKey: @"progress"];
-		[dictionary setValue: _progressId forKey: @"progressId"];
+		[dictionary setValue: progressId forKey: @"progressId"];
 		[dictionary setValue: @"PROGRESS_TRANSCODING" forKey: @"type"];
 
 		CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];

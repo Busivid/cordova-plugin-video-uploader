@@ -6,6 +6,7 @@
 @interface BVUploadOperation : NSOperation
 
 @property (readonly) NSString *errorMessage;
+@property (readonly) NSString *progressId;
 @property (copy) NSURL *source;
 @property (copy) NSURL *target;
 @property (copy) NSURL *uploadCompleteUrl;

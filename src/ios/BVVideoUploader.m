@@ -18,8 +18,27 @@
 @synthesize completedUploads;
 
 - (void) abort:(CDVInvokedUrlCommand *) cmd {
-	[_transcodeQueue cancelAllOperations];
-	[_uploadQueue cancelAllOperations];
+	NSLog(@"[BVVideoUploader]: abort called");
+
+	if (cmd.arguments.count > 0) {
+		NSString *progressId = [cmd.arguments objectAtIndex:0];
+
+		NSLog(@"[BVVideoUploader]: aborting %@", progressId);
+		for (BVTranscodeOperation *operation in [_transcodeQueue operations]) {
+			if ([[operation progressId] isEqualToString:progressId]) {
+				[operation cancel];
+			}
+		}
+		for (BVUploadOperation *operation in [_uploadQueue operations]) {
+			if ([[operation progressId] isEqualToString:progressId]) {
+				[operation cancel];
+			}
+		}
+	} else {
+		NSLog(@"[BVVideoUploader]: aborting all operations");
+		[_transcodeQueue cancelAllOperations];
+		[_uploadQueue cancelAllOperations];
+	}
 	[self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:_latestCallbackId];
 }
 

@@ -1,8 +1,7 @@
 var exec = require('cordova/exec');
 
-exports.abort = function(success) {
-	var error = function(){};
-	exec(success, error, 'VideoUploader', 'abort', []);
+exports.abort = function(progressId, successCallback, errorCallback) {
+	exec(successCallback, errorCallback, 'VideoUploader', 'abort', [progressId]);
 };
 
 exports.cleanUp = function (success, error) {
