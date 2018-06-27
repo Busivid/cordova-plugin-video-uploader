@@ -35,8 +35,8 @@ class UploadOperationCallback {
 
 		JSONObject jsonObj = new JSONObject();
 		try {
+			jsonObj.put("id", _progressId);
 			jsonObj.put("progress", 100);
-			jsonObj.put("progressId", _progressId);
 			jsonObj.put("type", VideoUploader.PROGRESS_UPLOADED);
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -66,8 +66,8 @@ class UploadOperationCallback {
 
 		JSONObject jsonObj = new JSONObject();
 		try {
+			jsonObj.put("id", _progressId);
 			jsonObj.put("progress", percentage);
-			jsonObj.put("progressId", _progressId);
 			jsonObj.put("type", VideoUploader.PROGRESS_UPLOADING);
 		} catch (JSONException e) {
 			e.printStackTrace();

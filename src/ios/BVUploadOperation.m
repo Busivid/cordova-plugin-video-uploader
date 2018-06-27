@@ -54,7 +54,7 @@
 	_cordovaCallbackId = callbackId;
 	_commandDelegate = delegate;
 	_options = options;
-	progressId = options[@"progressId"];
+	progressId = options[@"id"];
 
 	_fileTransfer = [[CDVFileTransfer alloc] init];
 	[_fileTransfer pluginInitialize];
@@ -166,13 +166,13 @@
 				NSURLComponents *url = [[NSURLComponents alloc] initWithURL:request.URL resolvingAgainstBaseURL:YES];
 				NSArray<NSURLQueryItem *> *queryItems = [url queryItems];
 
-				NSURLQueryItem *queryItem = [NSURLQueryItem queryItemWithName: @"ClientUploadSeconds" value: [@(ceil(clientUploadSeconds)) stringValue]];
+				NSURLQueryItem *queryItem = [NSURLQueryItem queryItemWithName: @"clientUploadSeconds" value: [@(ceil(clientUploadSeconds)) stringValue]];
 				queryItems = [queryItems arrayByAddingObject: queryItem];
 
 				[url setQueryItems: queryItems];
 				[request setURL:url.URL];
 			} else if ([uploadCompleteUrlMethod isEqualToString:@"POST"] || [uploadCompleteUrlMethod isEqualToString:@"PUT"]) {
-				[_uploadCompleteUrlFields setObject:[@(ceil(clientUploadSeconds)) stringValue] forKey:@"ClientUploadSeconds"];
+				[_uploadCompleteUrlFields setObject:[@(ceil(clientUploadSeconds)) stringValue] forKey:@"clientUploadSeconds"];
 			}
 		}
 

@@ -30,7 +30,7 @@
 	_commandDelegate = delegate;
 	_cordovaCallbackId = callbackId;
 	_dstPath = dst;
-	progressId = options[@"progressId"];
+	progressId = options[@"id"];
 	_srcPath = src;
 	_videoDuration = options[@"maxSeconds"];
 
@@ -122,8 +122,8 @@
 
 	if (_commandDelegate != nil && _cordovaCallbackId != nil) {
 		NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
+		[dictionary setValue: progressId forKey: @"id"];
 		[dictionary setValue: progress forKey: @"progress"];
-		[dictionary setValue: progressId forKey: @"progressId"];
 		[dictionary setValue: @"PROGRESS_TRANSCODING" forKey: @"type"];
 
 		CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];

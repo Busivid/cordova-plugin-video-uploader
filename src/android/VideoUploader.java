@@ -110,7 +110,7 @@ public class VideoUploader extends CordovaPlugin {
 				// Parse options
 				final JSONObject options = fileOptions.getJSONObject(i);
 				final Boolean deleteAfter = options.optBoolean("deleteAfter", false);
-				final String progressId = options.getString("progressId"); // mediaId
+				final String progressId = options.getString("id"); // mediaId
 
 				final File original = _utils.resolveLocalFileSystemURI(options.getString("filePath"));
 

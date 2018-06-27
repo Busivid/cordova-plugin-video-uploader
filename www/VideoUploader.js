@@ -1,7 +1,7 @@
 var exec = require('cordova/exec');
 
-exports.abort = function(progressId, successCallback, errorCallback) {
-	exec(successCallback, errorCallback, 'VideoUploader', 'abort', [progressId]);
+exports.abort = function(id, successCallback, errorCallback) {
+	exec(successCallback, errorCallback, 'VideoUploader', 'abort', [id]);
 };
 
 exports.cleanUp = function (success, error) {
@@ -23,7 +23,7 @@ exports.compressAndUpload = function (options, successCallback, progressCallback
 	var success = function (results) {
 		if (results !== null && typeof results.progress !== 'undefined') {
 			if (typeof progressCallback === 'function') {
-				progressCallback(results.type, results.progressId, results.progress);
+				progressCallback(results.type, results.id, results.progress);
 			}
 		} else {
 			if (typeof successCallback === 'function') {

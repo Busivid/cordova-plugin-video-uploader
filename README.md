@@ -15,16 +15,16 @@ Performs the following steps
 ## Usage
 
     function onVideoUploadError(error) {
-      console.log(error.completedUploads); // Array of progressId
+      console.log(error.completedUploads); // Array of id
       console.log(error.message);
     }
 
-    function onVideoUploadProgress(type, progressId, percentage) {
+    function onVideoUploadProgress(type, id, percentage) {
       // percentage is (int) 1-100
-      // progressId (see options.progressId)
+      // id (see options.id)
       // type is either 'TRANSCODE_COMPLETE', 'TRANSCODE_ERROR', 'TRANSCODING', 'UPLOAD_COMPLETE' or 'UPLOADING'
 
-      console.log(progressId + ' ' + type + ' ' + percentage + '%');
+      console.log(id + ' ' + type + ' ' + percentage + '%');
     }
 
     function onVideoUploadSuccess() {
@@ -36,9 +36,9 @@ Performs the following steps
       'chunkSize': 'Size of each individual chunk',
       'fileName': 'Relative Remote path/to/filename.mp4',
       'filePath': 'Absolute Local file://URL',
+      'id': 'Some unique string, used to facilitate multiple concurrent operations',
       'maxSeconds': '(int) Maximum video length in seconds',
       'params': 'Array of HTTP Request variables sent to both the callbackUrl and uploadUrl',
-      'progressId': 'Some unique string, used to facilitate multiple concurrent operations',
       'timeout': '(int) Timeout value for the upload request',
       'uploadUrl': 'Url to POST the transcoded file to'
     };

@@ -59,8 +59,8 @@
 
 	if ([progress intValue] > [lastReportedProgress intValue]) {
 		NSMutableDictionary *uploadProgress = [[NSMutableDictionary alloc] initWithCapacity:3];
+		[uploadProgress setObject:progressId forKey:@"id"];
 		[uploadProgress setObject:progress forKey:@"progress"];
-		[uploadProgress setObject:progressId forKey:@"progressId"];
 		[uploadProgress setObject:@"PROGRESS_UPLOADING" forKey:@"type"];
 
 		CDVPluginResult *newResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:uploadProgress];

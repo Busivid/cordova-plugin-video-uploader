@@ -66,7 +66,7 @@ class TranscodeOperationCallback {
 		JSONObject jsonObj = new JSONObject();
 		try {
 			jsonObj.put("progress", percentage);
-			jsonObj.put("progressId", _progressId);
+			jsonObj.put("id", _progressId);
 			jsonObj.put("type", type);
 		} catch (JSONException e) {
 			e.printStackTrace();

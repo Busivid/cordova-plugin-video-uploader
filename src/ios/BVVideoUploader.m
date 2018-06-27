@@ -97,7 +97,7 @@
 	[self.commandDelegate runInBackground:^{
 		NSArray *fileOptions = [cmd.arguments objectAtIndex:0];
 		for(NSDictionary *options in fileOptions) {
-			NSString *progressId = options[@"progressId"];
+			NSString *progressId = options[@"id"];
 
 			// Find a temporary path for transcoding.
 			NSString *transcodingDstFilePath = [self getTempTranscodingFile:progressId];
@@ -263,8 +263,8 @@
 
 - (void) reportProgress:(NSString *) callbackId progress:(NSNumber *) progress progressId:(NSString *) progressId type:(NSString *) type {
 	NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] init];
+	[dictionary setValue: progressId forKey: @"id"];
 	[dictionary setValue: progress forKey: @"progress"];
-	[dictionary setValue: progressId forKey: @"progressId"];
 	[dictionary setValue: type forKey: @"type"];
 	CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: dictionary];
 	[result setKeepCallbackAsBool:YES];
